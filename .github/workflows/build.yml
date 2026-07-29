@@ -1,0 +1,49 @@
+name: Build packages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        env:
+          RUSTFLAGS: -C target-feature=+crt-static
+        run: cargo build --release --bin error-explainer
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force package
+          Copy-Item target/release/error-explainer.exe package/Error-Explainer.exe
+          Copy-Item "Create Desktop Shortcut.cmd",README.md,LICENSE package/
+          $hash = (Get-FileHash package/Error-Explainer.exe -Algorithm SHA256).Hash
+          "$hash  Error-Explainer.exe" | Set-Content package/SHA256SUMS.txt
+          Compress-Archive package/* Error-Explainer-Windows-x86_64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Error-Explainer-Windows-x86_64
+          path: Error-Explainer-Windows-x86_64.zip
+
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libappindicator3-dev
+      - name: Test
+        run: cargo test
+      - name: Package
+        run: bash package-linux.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Error-Explainer-Linux-x86_64
+          path: |
+            dist/Error-Explainer-Linux-x86_64.tar.gz
+            dist/Error-Explainer-Linux-x86_64.tar.gz.sha256

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Error Explainer
+Comment=Local AI error and incident explainer
+Exec=error-explainer-tray
+Icon=error-explainer
+Terminal=false
+Categories=Development;Utility;
+StartupNotify=false
