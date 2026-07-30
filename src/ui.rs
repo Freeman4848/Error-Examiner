@@ -118,6 +118,7 @@ impl ErrorExplainerApp {
                             });
                             ui.horizontal_wrapped(|ui| {
                                 ui.label(if log.normalized { "Pre-parsed" } else { "Raw" });
+                                ui.label(format!("Format: {}", log.detected_format));
                                 ui.label(format!(
                                     "{} → {} chars",
                                     log.original_chars, log.normalized_chars

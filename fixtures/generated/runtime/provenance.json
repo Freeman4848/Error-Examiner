@@ -1,0 +1,106 @@
+{
+  "generator": "tools/generate_runtime_fixtures.py",
+  "generated_locally": true,
+  "fixtures": [
+    {
+      "id": "python-traceback",
+      "command": [
+        "python3",
+        "-c",
+        "def fail():\n raise ValueError('bad input')\nfail()"
+      ],
+      "exit_code": 1
+    },
+    {
+      "id": "node-typeerror",
+      "command": [
+        "node",
+        "-e",
+        "const value=null; console.log(value.name)"
+      ],
+      "exit_code": 1
+    },
+    {
+      "id": "shell-command-not-found",
+      "command": [
+        "bash",
+        "-c",
+        "missing_ee_command"
+      ],
+      "exit_code": 127
+    },
+    {
+      "id": "postgres-connection",
+      "command": [
+        "psql",
+        "-h",
+        "127.0.0.1",
+        "-p",
+        "1",
+        "-d",
+        "missing"
+      ],
+      "exit_code": 2
+    },
+    {
+      "id": "docker-cli",
+      "command": [
+        "docker",
+        "inspect",
+        "missing-ee-container"
+      ],
+      "exit_code": 1
+    },
+    {
+      "id": "git-not-repository",
+      "command": [
+        "git",
+        "-C",
+        "/tmp/ee-fixtures-0ttrzn8u",
+        "status"
+      ],
+      "exit_code": 128
+    },
+    {
+      "id": "java-compile",
+      "command": [
+        "java",
+        "Broken.java"
+      ],
+      "exit_code": 1
+    },
+    {
+      "id": "java-runtime",
+      "command": [
+        "java",
+        "Crash.java"
+      ],
+      "exit_code": 1
+    },
+    {
+      "id": "gcc-compile",
+      "command": [
+        "gcc",
+        "broken.c"
+      ],
+      "exit_code": 1
+    },
+    {
+      "id": "gpp-compile",
+      "command": [
+        "g++",
+        "broken.cpp"
+      ],
+      "exit_code": 1
+    },
+    {
+      "id": "npm-missing-script",
+      "command": [
+        "npm",
+        "run",
+        "missing"
+      ],
+      "exit_code": 1
+    }
+  ]
+}

@@ -34,15 +34,37 @@ impl ErrorExplainerApp {
         let mode = &mut self.preview_mode;
         let active_pane = &mut self.preview_pane;
         let accent = palette(self.theme, self.opacity).accent;
+        #[cfg(target_os = "linux")]
+        let shortcuts = &mut self.shortcuts;
         let close_requested = context.show_viewport_immediate(
             egui::ViewportId::from_hash_of("log_preview"),
             builder,
             |preview_context, _class| {
+                #[cfg(target_os = "linux")]
+                shortcuts.apply(preview_context);
                 egui::TopBottomPanel::top("preview_modes").show(preview_context, |ui| {
                     ui.horizontal(|ui| {
                         ui.selectable_value(mode, PreviewMode::Raw, "Raw");
                         ui.selectable_value(mode, PreviewMode::Parsed, "Parsed");
                         ui.selectable_value(mode, PreviewMode::Compare, "Compare");
+                        ui.separator();
+                        if *mode == PreviewMode::Compare
+                            && ui
+                                .button(format!("Switch focus: {}", active_pane.other().label()))
+                                .clicked()
+                        {
+                            *active_pane = active_pane.other();
+                        }
+                        if *mode == PreviewMode::Compare {
+                            ui.label(format!("Active: {}", active_pane.label()));
+                            ui.separator();
+                        }
+                        if ui.button("Copy Raw").clicked() {
+                            ui.output_mut(|output| output.copied_text = log.raw_preview.clone());
+                        }
+                        if ui.button("Copy Parsed").clicked() {
+                            ui.output_mut(|output| output.copied_text = log.parsed_preview.clone());
+                        }
                         ui.separator();
                         ui.label(format!(
                             "{} -> {} chars · ~{} standard tokens",
@@ -108,15 +130,7 @@ fn preview_text(
     active: bool,
     accent: Color32,
 ) -> bool {
-    let pane_rect = ui.available_rect_before_wrap();
-    let clicked = ui
-        .interact(
-            pane_rect,
-            ui.id().with(id).with("focus"),
-            egui::Sense::click(),
-        )
-        .clicked();
-    egui::Frame::none()
+    let shown = egui::Frame::none()
         .stroke(egui::Stroke::new(
             if active { 2.0 } else { 1.0 },
             if active {
@@ -127,11 +141,22 @@ fn preview_text(
         ))
         .inner_margin(egui::Margin::same(6.0))
         .show(ui, |ui| {
-            ui.label(RichText::new(heading).heading().color(if active {
-                accent
-            } else {
-                ui.visuals().text_color()
-            }));
+            let header = egui::Frame::none()
+                .fill(if active {
+                    accent.linear_multiply(0.22)
+                } else {
+                    ui.visuals().widgets.inactive.bg_fill
+                })
+                .inner_margin(egui::Margin::symmetric(10.0, 7.0))
+                .show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
+                    ui.label(RichText::new(heading).strong().size(17.0));
+                });
+            let activated = header
+                .response
+                .interact(egui::Sense::click())
+                .on_hover_text("Activate this pane")
+                .clicked();
             ui.separator();
             ScrollArea::both()
                 .id_source(id)
@@ -140,6 +165,23 @@ fn preview_text(
                 .show(ui, |ui| {
                     ui.add(egui::Label::new(text).wrap(false).selectable(true));
                 });
+            activated
         });
-    clicked
+    shown.inner
+}
+
+impl PreviewPane {
+    fn other(self) -> Self {
+        match self {
+            Self::Raw => Self::Parsed,
+            Self::Parsed => Self::Raw,
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Raw => "Raw",
+            Self::Parsed => "Parsed",
+        }
+    }
 }

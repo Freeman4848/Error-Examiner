@@ -1286,6 +1286,7 @@ dependencies = [
  "global-hotkey",
  "image 0.25.10",
  "ksni",
+ "regex",
  "reqwest",
  "rfd",
  "serde",

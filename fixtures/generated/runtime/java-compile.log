@@ -1,0 +1,5 @@
+Broken.java:1: error: incompatible types: int cannot be converted to String
+class Broken { String value = 42; }
+                              ^
+1 error
+error: compilation failed

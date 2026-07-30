@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.IllegalStateException: broken state
+	at Crash.main(Crash.java:1)

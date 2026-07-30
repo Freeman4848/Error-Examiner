@@ -1,0 +1,4 @@
+broken.cpp: In function ‘int main()’:
+broken.cpp:2:34: error: conversion from ‘int’ to non-scalar type ‘std::string’ {aka ‘std::__cxx11::basic_string<char>’} requested
+    2 | int main() { std::string value = 42; }
+      |                                  ^~

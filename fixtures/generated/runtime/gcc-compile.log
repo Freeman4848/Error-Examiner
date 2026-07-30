@@ -1,0 +1,5 @@
+broken.c: In function ‘main’:
+broken.c:1:25: error: ‘missing_symbol’ undeclared (first use in this function)
+    1 | int main(void) { return missing_symbol; }
+      |                         ^~~~~~~~~~~~~~
+broken.c:1:25: note: each undeclared identifier is reported only once for each function it appears in

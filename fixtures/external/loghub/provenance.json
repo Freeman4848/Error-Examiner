@@ -1,0 +1,119 @@
+{
+  "source_repository": "https://github.com/logpai/loghub",
+  "commit": "dd61d0952749ee7963bde24220d1be5ede023033",
+  "usage_note": "Public research dataset; retain attribution and cite Loghub.",
+  "fixtures": [
+    {
+      "dataset": "Android",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Android/Android_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "Apache",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Apache/Apache_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "BGL",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/BGL/BGL_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "HDFS",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/HDFS/HDFS_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "HPC",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/HPC/HPC_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "Hadoop",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Hadoop/Hadoop_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "HealthApp",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/HealthApp/HealthApp_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "Linux",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Linux/Linux_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "Mac",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Mac/Mac_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "OpenSSH",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/OpenSSH/OpenSSH_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "OpenStack",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/OpenStack/OpenStack_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "Proxifier",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Proxifier/Proxifier_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "Spark",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Spark/Spark_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "Thunderbird",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Thunderbird/Thunderbird_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "Windows",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Windows/Windows_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    },
+    {
+      "dataset": "Zookeeper",
+      "source": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Zookeeper/Zookeeper_2k.log",
+      "upstream_lines": 2000,
+      "fixture_lines": 40,
+      "sanitized": true
+    }
+  ]
+}

@@ -11,6 +11,9 @@ JSON_CONTAINERS = {"json-object", "json-array", "ndjson"}
 def predicates(values):
     result = []
     for value in values:
+        if value.startswith("^  -->"):
+            value = value.replace("^  -->", r"^\s+-->", 1)
+        value = value.replace(r"error[E\d{4}]:", r"error\[E\d{4}\]:")
         predicate = "json_path_exists" if value.startswith("$.") else "regex"
         result.append({"type": predicate, "value": value})
     return result

@@ -9,7 +9,9 @@ mod hotkey;
 mod linux_hotkey;
 #[cfg(target_os = "linux")]
 mod linux_tray;
+mod parser_catalog;
 mod preprocess;
+mod preprocess_raw;
 mod storage;
 mod theme;
 mod ui;

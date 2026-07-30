@@ -7,22 +7,25 @@ use x11rb::{
 };
 
 const PHYSICAL_C: u8 = 54;
-const SHORTCUT_KEYS: [u8; 4] = [38, 54, 53, 55]; // A, C, X, V
+const SHORTCUT_KEYS: [u8; 5] = [38, 54, 53, 55, 52]; // A, C, X, V, Z
 
 pub(crate) struct Shortcuts {
     connection: Option<RustConnection>,
-    down: [bool; 4],
+    down: [bool; 5],
 }
 
 impl Shortcuts {
     pub(crate) fn new() -> Self {
         Self {
             connection: x11rb::connect(None).ok().map(|(connection, _)| connection),
-            down: [false; 4],
+            down: [false; 5],
         }
     }
 
     pub(crate) fn apply(&mut self, context: &egui::Context) {
+        if !context.input(|input| input.viewport().focused.unwrap_or(false)) {
+            return;
+        }
         let Some(connection) = &self.connection else {
             return;
         };
@@ -80,6 +83,13 @@ fn inject_shortcut(context: &egui::Context, index: usize, modifiers: egui::Modif
                 input.events.push(egui::Event::Paste(text));
             }
         }
+        4 => input.events.push(egui::Event::Key {
+            key: egui::Key::Z,
+            physical_key: Some(egui::Key::Z),
+            pressed: true,
+            repeat: false,
+            modifiers,
+        }),
         _ => {}
     });
 }

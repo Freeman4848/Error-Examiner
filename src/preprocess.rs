@@ -4,6 +4,7 @@ use std::collections::HashMap;
 #[derive(Clone)]
 pub(crate) struct PreparedLog {
     pub(crate) name: String,
+    pub(crate) detected_format: String,
     pub(crate) original_chars: usize,
     pub(crate) normalized_chars: usize,
     pub(crate) event_count: usize,
@@ -48,6 +49,10 @@ impl Severity {
 
 pub(crate) fn prepare(name: String, input: &str, batch_chars: usize) -> PreparedLog {
     let clean = normalize_newlines(input);
+    let detection = crate::parser_catalog::detect(&clean);
+    if !detection.supported {
+        return prepare_fallback(name, input, batch_chars, detection.format_ids);
+    }
     let events = parse_json(&clean).unwrap_or_else(|| parse_text(&clean));
     let event_count = events.len();
     let important_events = events
@@ -64,6 +69,7 @@ pub(crate) fn prepare(name: String, input: &str, batch_chars: usize) -> Prepared
     let batches = make_batches(&events, batch_chars.max(3_000));
     PreparedLog {
         name,
+        detected_format: detection.format_ids.join(" + "),
         original_chars: input.chars().count(),
         normalized_chars: normalized.chars().count(),
         event_count,
@@ -94,6 +100,7 @@ pub(crate) fn prepare_raw(
     let parsed_preview = render_events(&events);
     Ok(PreparedLog {
         name,
+        detected_format: "raw (preparation disabled)".to_owned(),
         original_chars: size,
         normalized_chars: size,
         event_count: 1,
@@ -105,6 +112,33 @@ pub(crate) fn prepare_raw(
         parsed_preview,
         normalized: false,
     })
+}
+
+fn prepare_fallback(
+    name: String,
+    input: &str,
+    batch_chars: usize,
+    formats: Vec<String>,
+) -> PreparedLog {
+    let size = input.chars().count();
+    PreparedLog {
+        name,
+        detected_format: if formats.is_empty() {
+            "unknown -> raw".to_owned()
+        } else {
+            format!("{} -> raw", formats.join(" + "))
+        },
+        original_chars: size,
+        normalized_chars: size,
+        event_count: 1,
+        important_events: 0,
+        duplicate_count: 0,
+        estimated_tokens: size.div_ceil(3),
+        batches: crate::preprocess_raw::batches(input, batch_chars.max(3_000)),
+        raw_preview: input.to_owned(),
+        parsed_preview: input.to_owned(),
+        normalized: false,
+    }
 }
 
 fn normalize_newlines(input: &str) -> String {
@@ -229,11 +263,21 @@ fn json_text_event(index: usize, value: &Value, payload: &str) -> LogEvent {
         known => known,
     };
     let timestamp = value["timestamp"].as_str().unwrap_or("no timestamp");
+    let has_level_prefix = [
+        "TRACE", "DEBUG", "INFO", "WARN", "WARNING", "ERROR", "FATAL",
+    ]
+    .iter()
+    .any(|level| payload.trim_start().starts_with(level));
+    let content = if has_level_prefix {
+        format!("{timestamp} {payload}")
+    } else {
+        format!("{timestamp} {} {payload}", severity.label())
+    };
     LogEvent {
         source: format!("JSON item {index} / textPayload"),
         severity,
         fingerprint: fingerprint(payload),
-        content: format!("{timestamp} {} {payload}", severity.label()),
+        content,
         repeats: 1,
     }
 }
