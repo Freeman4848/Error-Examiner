@@ -1,4 +1,4 @@
-# Error Explainer (EE)
+# Error Explainer
 
 Local tray application that sends logs, stack traces, and debugging questions
 to an AI provider and returns a testable explanation.
@@ -8,17 +8,21 @@ to an AI provider and returns a testable explanation.
 - `Ctrl+Shift+Alt+C` shows or hides the window and pastes the clipboard when
   the input is empty.
 - Local chat history with an explicit Clear action.
+- Named chat tabs, timestamps, file preview, and image attachments.
+- Optional log preparation with format-aware parsing, deduplication, redaction,
+  token estimates, safe batching, and Raw fallback.
 - API keys stay only in process memory and disappear on restart.
 - Hard input/output limits, timeout, optional retries, token estimate, and
   user-supplied cost rates.
 - Providers:
   - OpenAI Responses API with `store: false`
   - OpenAI-compatible APIs
-  - LM Studio at `http://localhost:1234/v1`
+  - Cerebras
+  - LM Studio native REST API at `http://localhost:1234`
   - Google Gemini
   - Anthropic
   - offline Demo mode
-- Native Windows tray and StatusNotifier/AppIndicator tray on Linux.
+- Tray integrated into the same executable on Windows and Linux.
 - Settings and About & Help views.
 
 ## Screenshots
@@ -34,12 +38,6 @@ to an AI provider and returns a testable explanation.
 Linux:
 
 ```bash
-cargo run --features linux-tray --bin error-explainer-tray
-```
-
-Run only the window:
-
-```bash
 cargo run --bin error-explainer
 ```
 
@@ -47,7 +45,7 @@ Build and test:
 
 ```bash
 cargo test
-cargo build --release --features linux-tray --bins
+cargo build --release --bin error-explainer
 ```
 
 Windows:
@@ -56,8 +54,7 @@ Windows:
 cargo run --release --bin error-explainer
 ```
 
-The Windows executable owns its tray icon. The Linux package contains the UI
-binary and a small tray launcher.
+One executable owns both the window and tray icon on Windows and Linux.
 
 ## Provider setup
 
@@ -65,11 +62,15 @@ Open Settings, select a provider, enter its current model ID and API key, then
 use Test connection. Provider/model/base URL and limits are saved; the API key
 is not.
 
-LM Studio requires its local server to be running on port `1234`. Select
-`LM Studio (local)` and enter the loaded model identifier; no key is required.
+LM Studio requires its local server on port `1234`. Select `LM Studio
+(local)`; leave Model empty to auto-detect a loaded local LLM. No key is
+required unless authentication was enabled in LM Studio.
 
 OpenAI-compatible supports services such as OpenRouter, Groq, Together,
 Mistral, or a custom gateway by changing Base URL and Model.
+
+Use **Add log or image** to attach a file. Prepared logs can be inspected in
+Raw, Parsed, or Compare mode before sending.
 
 ## Privacy
 
@@ -79,6 +80,7 @@ Mistral, or a custom gateway by changing Base URL and Model.
 - API keys are kept in RAM and are never written to settings, history, logs,
   screenshots, or exports.
 - Chat history is stored locally in the platform configuration directory.
+- Pasted text and attached screenshots become part of local chat history.
 - Logs can contain secrets or personal data; review them before submission.
 - Model conclusions are hypotheses and must be verified.
 

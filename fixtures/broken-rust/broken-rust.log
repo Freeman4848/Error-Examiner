@@ -1,0 +1,47 @@
+    Checking broken-log-normalizer v0.1.0 (/home/andy/___freelanc_try_work___/__01_demo_upwork/Error-Explainer/fixtures/broken-rust)
+error[E0308]: mismatched types
+ --> src/main.rs:8:21
+  |
+8 |     let level: u8 = "ERROR";
+  |                --   ^^^^^^^ expected `u8`, found `&str`
+  |                |
+  |                expected due to this
+
+error[E0308]: mismatched types
+  --> src/main.rs:11:18
+   |
+11 |         message: line,
+   |                  ^^^^ expected `String`, found `&str`
+   |
+help: try using a conversion method
+   |
+11 |         message: line.to_string(),
+   |                      ++++++++++++
+
+error[E0061]: this function takes 1 argument but 0 arguments were supplied
+  --> src/main.rs:16:17
+   |
+16 |     let event = normalize();
+   |                 ^^^^^^^^^-- argument #1 of type `&str` is missing
+   |
+note: function defined here
+  --> src/main.rs:7:4
+   |
+ 7 | fn normalize(line: &str) -> LogEvent {
+   |    ^^^^^^^^^ ----------
+help: provide the argument
+   |
+16 |     let event = normalize(/* &str */);
+   |                           ++++++++++
+
+error[E0609]: no field `severity` on type `LogEvent`
+  --> src/main.rs:17:30
+   |
+17 |     println!("{}: {}", event.severity, event.message);
+   |                              ^^^^^^^^ unknown field
+   |
+   = note: available fields are: `level`, `message`
+
+Some errors have detailed explanations: E0061, E0308, E0609.
+For more information about an error, try `rustc --explain E0061`.
+error: could not compile `broken-log-normalizer` (bin "broken-log-normalizer") due to 4 previous errors

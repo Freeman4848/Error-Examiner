@@ -6,21 +6,21 @@ description = "Local AI error and incident explainer"
 license = "MIT"
 build = "build.rs"
 
-[features]
-default = []
-linux-tray = []
-
 [dependencies]
 arboard = "3.4"
+base64 = "0.22"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 eframe = "0.27"
 global-hotkey = "0.7"
 image = { version = "0.25", default-features = false, features = ["png"] }
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+rfd = { version = "0.15", default-features = false, features = ["gtk3"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ksni = { version = "0.3", features = ["blocking"] }
+x11rb = "0.13"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 tray-icon = "0.24.1"
@@ -28,11 +28,6 @@ tray-icon = "0.24.1"
 [[bin]]
 name = "error-explainer"
 path = "src/main.rs"
-
-[[bin]]
-name = "error-explainer-tray"
-path = "src/bin/error_explainer_tray.rs"
-required-features = ["linux-tray"]
 
 [build-dependencies]
 winresource = "0.1.31"

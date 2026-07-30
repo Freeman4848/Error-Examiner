@@ -1,0 +1,3445 @@
+{
+  "schema_version": 2,
+  "source_schema_version": 1,
+  "decoders": [
+    {
+      "id": "json-object",
+      "detect": {
+        "required": [
+          {
+            "type": "regex",
+            "value": "^\\s*\\{"
+          }
+        ],
+        "any": [],
+        "forbidden": [
+          {
+            "type": "regex",
+            "value": "^\\s*\\["
+          }
+        ]
+      },
+      "emits": "json-record",
+      "iteration": "single",
+      "fallback": "raw"
+    },
+    {
+      "id": "json-array",
+      "detect": {
+        "required": [
+          {
+            "type": "regex",
+            "value": "^\\s*\\["
+          }
+        ],
+        "any": [],
+        "forbidden": [
+          {
+            "type": "regex",
+            "value": "^\\s*\\{"
+          }
+        ]
+      },
+      "emits": "json-record",
+      "iteration": "array-items",
+      "fallback": "raw"
+    },
+    {
+      "id": "ndjson",
+      "detect": {
+        "required": [
+          {
+            "type": "regex",
+            "value": "^\\{.*\\}\\s*\\n\\{.*\\}"
+          }
+        ],
+        "any": [],
+        "forbidden": []
+      },
+      "emits": "json-record",
+      "iteration": "lines",
+      "fallback": "raw"
+    },
+    {
+      "id": "structured-text",
+      "detect": {
+        "required": [],
+        "any": [
+          {
+            "type": "regex",
+            "value": "^\\w{3}\\s+\\d+"
+          },
+          {
+            "type": "regex",
+            "value": "^\\d{4}-\\d{2}-\\d{2}"
+          },
+          {
+            "type": "regex",
+            "value": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}"
+          }
+        ],
+        "forbidden": [
+          {
+            "type": "regex",
+            "value": "^\\s*\\{"
+          },
+          {
+            "type": "regex",
+            "value": "^\\s*\\["
+          }
+        ]
+      },
+      "emits": "text-record",
+      "iteration": "lines",
+      "fallback": "raw"
+    },
+    {
+      "id": "multiline-text",
+      "detect": {
+        "required": [],
+        "any": [
+          {
+            "type": "regex",
+            "value": "\\n\\s+at "
+          },
+          {
+            "type": "regex",
+            "value": "\\nTraceback \\(most recent call last\\):"
+          },
+          {
+            "type": "regex",
+            "value": "\\nthread '.*' panicked at"
+          },
+          {
+            "type": "regex",
+            "value": "\\ngoroutine \\d+ \\[running\\]:"
+          }
+        ],
+        "forbidden": [
+          {
+            "type": "regex",
+            "value": "^\\s*\\{"
+          },
+          {
+            "type": "regex",
+            "value": "^\\s*\\["
+          }
+        ]
+      },
+      "emits": "text-record",
+      "iteration": "blocks",
+      "fallback": "raw"
+    },
+    {
+      "id": "unknown",
+      "detect": {
+        "required": [],
+        "any": [],
+        "forbidden": []
+      },
+      "emits": "text-record",
+      "iteration": "single",
+      "fallback": "raw"
+    }
+  ],
+  "classifier": {
+    "formats": [
+      {
+        "id": "gcp-json-payload",
+        "label": "GCP Cloud Logging JSON Payload",
+        "record_kind": "json-record",
+        "family_path": [
+          "gcp-cloud-logging"
+        ],
+        "match_groups": [
+          {
+            "scope": "gcp-cloud-logging",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.insertId"
+                }
+              ],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.logName"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.resource"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "gcp-json-payload",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.jsonPayload"
+                }
+              ],
+              "any": [],
+              "forbidden": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.textPayload"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.protoPayload"
+                }
+              ]
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.9
+        },
+        "parser_id": "gcp-json-payload-parser",
+        "canonical_fields": {
+          "timestamp": "$.timestamp",
+          "severity": "$.severity",
+          "code": "$.jsonPayload.code",
+          "message": "$.jsonPayload.message",
+          "source": "$.resource.labels.container_name",
+          "stacktrace": "$.jsonPayload.stacktrace",
+          "trace_id": "$.trace",
+          "request": "$.jsonPayload.httpRequest",
+          "attributes": "$.jsonPayload"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "DEFAULT": "info",
+          "DEBUG": "debug",
+          "INFO": "info",
+          "WARNING": "warning",
+          "ERROR": "error",
+          "CRITICAL": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "gcp-text-payload",
+        "label": "GCP Cloud Logging Text Payload",
+        "record_kind": "json-record",
+        "family_path": [
+          "gcp-cloud-logging"
+        ],
+        "match_groups": [
+          {
+            "scope": "gcp-cloud-logging",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.insertId"
+                }
+              ],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.logName"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.resource"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "gcp-text-payload",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.textPayload"
+                }
+              ],
+              "any": [],
+              "forbidden": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.jsonPayload"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.protoPayload"
+                }
+              ]
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.9
+        },
+        "parser_id": "gcp-text-payload-parser",
+        "canonical_fields": {
+          "timestamp": "$.timestamp",
+          "severity": "$.severity",
+          "code": null,
+          "message": "$.textPayload",
+          "source": "$.resource.type",
+          "stacktrace": null,
+          "trace_id": "$.trace",
+          "request": null,
+          "attributes": "$.labels"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "DEFAULT": "info",
+          "DEBUG": "debug",
+          "INFO": "info",
+          "WARNING": "warning",
+          "ERROR": "error",
+          "CRITICAL": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "gcp-proto-payload-audit",
+        "label": "GCP AuditLog Proto Payload",
+        "record_kind": "json-record",
+        "family_path": [
+          "gcp-cloud-logging"
+        ],
+        "match_groups": [
+          {
+            "scope": "gcp-cloud-logging",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.insertId"
+                }
+              ],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.logName"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.resource"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "gcp-proto-payload-audit",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.protoPayload.@type"
+                }
+              ],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "@type=type.googleapis.com/google.cloud.audit.AuditLog"
+                }
+              ],
+              "forbidden": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.jsonPayload"
+                }
+              ]
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.9
+        },
+        "parser_id": "gcp-proto-audit-parser",
+        "canonical_fields": {
+          "timestamp": "$.timestamp",
+          "severity": "$.severity",
+          "code": "$.protoPayload.status.code",
+          "message": "$.protoPayload.methodName",
+          "source": "$.protoPayload.serviceName",
+          "stacktrace": null,
+          "trace_id": "$.trace",
+          "request": "$.protoPayload.request",
+          "attributes": "$.protoPayload.metadata"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "DEFAULT": "info",
+          "INFO": "info",
+          "NOTICE": "info",
+          "WARNING": "warning",
+          "ERROR": "error"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "gcp-http-request",
+        "label": "GCP Cloud Logging HTTP Request",
+        "record_kind": "json-record",
+        "family_path": [
+          "gcp-cloud-logging"
+        ],
+        "match_groups": [
+          {
+            "scope": "gcp-cloud-logging",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.insertId"
+                }
+              ],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.logName"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.resource"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "gcp-http-request",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.httpRequest"
+                }
+              ],
+              "any": [],
+              "forbidden": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.protoPayload"
+                }
+              ]
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.95,
+          "medium": 0.85
+        },
+        "parser_id": "gcp-http-request-parser",
+        "canonical_fields": {
+          "timestamp": "$.timestamp",
+          "severity": "$.severity",
+          "code": "$.httpRequest.status",
+          "message": "$.httpRequest.requestUrl",
+          "source": "$.httpRequest.userAgent",
+          "stacktrace": null,
+          "trace_id": "$.trace",
+          "request": "$.httpRequest",
+          "attributes": "$.httpRequest"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "DEFAULT": "info",
+          "INFO": "info",
+          "WARNING": "warning",
+          "ERROR": "error"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "aws-cloudtrail-event",
+        "label": "AWS CloudTrail Event",
+        "record_kind": "json-record",
+        "family_path": [
+          "aws-cloud-services"
+        ],
+        "match_groups": [
+          {
+            "scope": "aws-cloud-services",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.awsRegion"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.eventSource"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.awslogs"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.functionName"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "aws-cloudtrail-event",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.eventVersion"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.eventSource"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.awsRegion"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.9
+        },
+        "parser_id": "aws-cloudtrail-parser",
+        "canonical_fields": {
+          "timestamp": "$.eventTime",
+          "severity": "$.errorCode",
+          "code": "$.errorCode",
+          "message": "$.errorMessage",
+          "source": "$.eventSource",
+          "stacktrace": null,
+          "trace_id": "$.requestID",
+          "request": "$.requestParameters",
+          "attributes": "$.userIdentity"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "ClientError": "error",
+          "ServerError": "fatal",
+          "UnauthorizedAccess": "error"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "aws-cloudwatch-event",
+        "label": "AWS CloudWatch Logs Event",
+        "record_kind": "json-record",
+        "family_path": [
+          "aws-cloud-services"
+        ],
+        "match_groups": [
+          {
+            "scope": "aws-cloud-services",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.awsRegion"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.eventSource"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.awslogs"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.functionName"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "aws-cloudwatch-event",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.id"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.timestamp"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.message"
+                }
+              ],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.logGroup"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.logStream"
+                }
+              ],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.95,
+          "medium": 0.8
+        },
+        "parser_id": "aws-cloudwatch-parser",
+        "canonical_fields": {
+          "timestamp": "$.timestamp",
+          "severity": "$.level",
+          "code": null,
+          "message": "$.message",
+          "source": "$.logStream",
+          "stacktrace": null,
+          "trace_id": "$.extractedFields.requestId",
+          "request": null,
+          "attributes": "$"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "ERROR": "error",
+          "WARN": "warning",
+          "INFO": "info",
+          "DEBUG": "debug"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "aws-lambda-json",
+        "label": "AWS Lambda Structured JSON Log",
+        "record_kind": "json-record",
+        "family_path": [
+          "aws-cloud-services"
+        ],
+        "match_groups": [
+          {
+            "scope": "aws-cloud-services",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.awsRegion"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.eventSource"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.awslogs"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.functionName"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "aws-lambda-json",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.requestId"
+                }
+              ],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.requestId"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.level"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.timestamp"
+                }
+              ],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.92,
+          "medium": 0.8
+        },
+        "parser_id": "aws-lambda-json-parser",
+        "canonical_fields": {
+          "timestamp": "$.timestamp",
+          "severity": "$.level",
+          "code": null,
+          "message": "$.message",
+          "source": "$.functionName",
+          "stacktrace": "$.error.stacktrace",
+          "trace_id": "$.requestId",
+          "request": null,
+          "attributes": "$"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "TRACE": "trace",
+          "DEBUG": "debug",
+          "INFO": "info",
+          "WARN": "warning",
+          "ERROR": "error",
+          "FATAL": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "azure-diagnostic-log",
+        "label": "Azure Diagnostic Resource Log",
+        "record_kind": "json-record",
+        "family_path": [
+          "azure-monitor"
+        ],
+        "match_groups": [
+          {
+            "scope": "azure-monitor",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.resourceId"
+                }
+              ],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.category"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.operationName"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "azure-diagnostic-log",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.resourceId"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.operationName"
+                }
+              ],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.level"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.properties"
+                }
+              ],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.88
+        },
+        "parser_id": "azure-diagnostic-parser",
+        "canonical_fields": {
+          "timestamp": "$.time",
+          "severity": "$.level",
+          "code": "$.properties.statusCode",
+          "message": "$.properties.message",
+          "source": "$.resourceId",
+          "stacktrace": "$.properties.exception",
+          "trace_id": "$.correlationId",
+          "request": "$.properties.requestUri",
+          "attributes": "$.properties"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "Verbose": "debug",
+          "Informational": "info",
+          "Warning": "warning",
+          "Error": "error",
+          "Critical": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "docker-json-file",
+        "label": "Docker Engine JSON File Log",
+        "record_kind": "json-record",
+        "family_path": [
+          "container-runtimes-json"
+        ],
+        "match_groups": [
+          {
+            "scope": "container-runtimes-json",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.stream"
+                }
+              ],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.log"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.time"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "docker-json-file",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.log"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.stream"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.time"
+                }
+              ],
+              "any": [],
+              "forbidden": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.kubernetes"
+                }
+              ]
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.9
+        },
+        "parser_id": "docker-json-parser",
+        "canonical_fields": {
+          "timestamp": "$.time",
+          "severity": null,
+          "code": null,
+          "message": "$.log",
+          "source": "$.stream",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": {
+            "stream": "$.stream"
+          }
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "stdout": "info",
+          "stderr": "error"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "k8s-json-container",
+        "label": "Kubernetes Container Log JSON",
+        "record_kind": "json-record",
+        "family_path": [
+          "container-runtimes-json"
+        ],
+        "match_groups": [
+          {
+            "scope": "container-runtimes-json",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.stream"
+                }
+              ],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.log"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.time"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "k8s-json-container",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.log"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.stream"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.time"
+                }
+              ],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.kubernetes"
+                }
+              ],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.92
+        },
+        "parser_id": "k8s-json-parser",
+        "canonical_fields": {
+          "timestamp": "$.time",
+          "severity": null,
+          "code": null,
+          "message": "$.log",
+          "source": "$.kubernetes.pod_name",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": "$.kubernetes"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "stdout": "info",
+          "stderr": "error"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "pino-json",
+        "label": "Pino Logger JSON",
+        "record_kind": "json-record",
+        "family_path": [
+          "nodejs-structured"
+        ],
+        "match_groups": [
+          {
+            "scope": "nodejs-structured",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.pid"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.hostname"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.level"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "pino-json",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.level"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.time"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.pid"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.hostname"
+                }
+              ],
+              "any": [],
+              "forbidden": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.v"
+                }
+              ]
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.88
+        },
+        "parser_id": "pino-json-parser",
+        "canonical_fields": {
+          "timestamp": "$.time",
+          "severity": "$.level",
+          "code": "$.err.code",
+          "message": "$.msg",
+          "source": "$.hostname",
+          "stacktrace": "$.err.stack",
+          "trace_id": "$.reqId",
+          "request": "$.req",
+          "attributes": "$"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "10": "trace",
+          "20": "debug",
+          "30": "info",
+          "40": "warning",
+          "50": "error",
+          "60": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "bunyan-json",
+        "label": "Bunyan Logger JSON",
+        "record_kind": "json-record",
+        "family_path": [
+          "nodejs-structured"
+        ],
+        "match_groups": [
+          {
+            "scope": "nodejs-structured",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.pid"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.hostname"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.level"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "bunyan-json",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.v"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.level"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.name"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.pid"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.hostname"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.msg"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.time"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.9
+        },
+        "parser_id": "bunyan-json-parser",
+        "canonical_fields": {
+          "timestamp": "$.time",
+          "severity": "$.level",
+          "code": "$.err.code",
+          "message": "$.msg",
+          "source": "$.name",
+          "stacktrace": "$.err.stack",
+          "trace_id": "$.req_id",
+          "request": "$.req",
+          "attributes": "$"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "10": "trace",
+          "20": "debug",
+          "30": "info",
+          "40": "warning",
+          "50": "error",
+          "60": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "generic-json-log",
+        "label": "Generic Application JSON Log",
+        "record_kind": "json-record",
+        "family_path": [
+          "generic-json-app"
+        ],
+        "match_groups": [
+          {
+            "scope": "generic-json-app",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.message"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.msg"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.timestamp"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.time"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.level"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "generic-json-log",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.timestamp"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.time"
+                },
+                {
+                  "type": "json_path_exists",
+                  "value": "$.ts"
+                }
+              ],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.7,
+          "medium": 0.5
+        },
+        "parser_id": "generic-json-parser",
+        "canonical_fields": {
+          "timestamp": "$.timestamp",
+          "severity": "$.level",
+          "code": "$.code",
+          "message": "$.message",
+          "source": "$.service",
+          "stacktrace": "$.stacktrace",
+          "trace_id": "$.trace_id",
+          "request": "$.request",
+          "attributes": "$"
+        },
+        "event_boundary": null,
+        "severity_mapping": {
+          "TRACE": "trace",
+          "DEBUG": "debug",
+          "INFO": "info",
+          "WARN": "warning",
+          "WARNING": "warning",
+          "ERROR": "error",
+          "FATAL": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "aws-cloudtrail-batch",
+        "label": "AWS CloudTrail Records Array",
+        "record_kind": "json-record",
+        "family_path": [],
+        "match_groups": [
+          {
+            "scope": "aws-cloudtrail-batch",
+            "detect": {
+              "required": [
+                {
+                  "type": "json_path_exists",
+                  "value": "$.Records"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.88
+        },
+        "parser_id": "aws-cloudtrail-batch-parser",
+        "canonical_fields": {
+          "timestamp": "$.Records[*].eventTime",
+          "severity": "$.Records[*].errorCode",
+          "code": "$.Records[*].errorCode",
+          "message": "$.Records[*].errorMessage",
+          "source": "$.Records[*].eventSource",
+          "stacktrace": null,
+          "trace_id": "$.Records[*].requestID",
+          "request": "$.Records[*].requestParameters",
+          "attributes": "$.Records[*]"
+        },
+        "event_boundary": "json_element",
+        "severity_mapping": {
+          "ClientError": "error",
+          "ServerError": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "generic-json-array",
+        "label": "Generic JSON Array Log Events",
+        "record_kind": "json-record",
+        "family_path": [],
+        "match_groups": [],
+        "confidence": {
+          "high": 0.6,
+          "medium": 0.4
+        },
+        "parser_id": "generic-json-array-parser",
+        "canonical_fields": {
+          "timestamp": "$.[*].timestamp",
+          "severity": "$.[*].level",
+          "code": "$.[*].code",
+          "message": "$.[*].message",
+          "source": "$.[*].source",
+          "stacktrace": "$.[*].stacktrace",
+          "trace_id": "$.[*].trace_id",
+          "request": null,
+          "attributes": "$.[*]"
+        },
+        "event_boundary": "json_element",
+        "severity_mapping": {
+          "DEBUG": "debug",
+          "INFO": "info",
+          "WARN": "warning",
+          "ERROR": "error"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "gcp-ndjson-stream",
+        "label": "GCP Cloud Logging NDJSON Stream",
+        "record_kind": "json-record",
+        "family_path": [],
+        "match_groups": [
+          {
+            "scope": "gcp-ndjson-stream",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "insertId"
+                }
+              ],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "logName"
+                }
+              ],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.95,
+          "medium": 0.85
+        },
+        "parser_id": "gcp-ndjson-parser",
+        "canonical_fields": {
+          "timestamp": "$.timestamp",
+          "severity": "$.severity",
+          "code": null,
+          "message": "$.jsonPayload.message",
+          "source": "$.resource.type",
+          "stacktrace": null,
+          "trace_id": "$.trace",
+          "request": null,
+          "attributes": "$"
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "INFO": "info",
+          "WARNING": "warning",
+          "ERROR": "error"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "generic-ndjson-log",
+        "label": "Generic Application NDJSON",
+        "record_kind": "json-record",
+        "family_path": [],
+        "match_groups": [],
+        "confidence": {
+          "high": 0.7,
+          "medium": 0.5
+        },
+        "parser_id": "generic-ndjson-parser",
+        "canonical_fields": {
+          "timestamp": "$.timestamp",
+          "severity": "$.level",
+          "code": "$.code",
+          "message": "$.message",
+          "source": "$.service",
+          "stacktrace": "$.stacktrace",
+          "trace_id": "$.trace_id",
+          "request": null,
+          "attributes": "$"
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "DEBUG": "debug",
+          "INFO": "info",
+          "WARN": "warning",
+          "ERROR": "error"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "syslog-rfc5424",
+        "label": "Syslog RFC 5424",
+        "record_kind": "text-record",
+        "family_path": [
+          "syslog-family"
+        ],
+        "match_groups": [
+          {
+            "scope": "syslog-family",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "^<\\d{1,3}>"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "syslog-rfc5424",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^<\\d{1,3}>1\\s+\\d{4}-\\d{2}-\\d{2}T"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.9
+        },
+        "parser_id": "syslog-rfc5424-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$2",
+          "code": "$5",
+          "message": "$7",
+          "source": "$3",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": "$6"
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "0": "fatal",
+          "1": "fatal",
+          "2": "fatal",
+          "3": "error",
+          "4": "warning",
+          "5": "info",
+          "6": "info",
+          "7": "debug"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "syslog-rfc3164",
+        "label": "Syslog RFC 3164 (BSD)",
+        "record_kind": "text-record",
+        "family_path": [
+          "syslog-family"
+        ],
+        "match_groups": [
+          {
+            "scope": "syslog-family",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "^<\\d{1,3}>"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "syslog-rfc3164",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^<\\d{1,3}>[A-Z][a-z]{2}\\s+\\d+"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.85
+        },
+        "parser_id": "syslog-rfc3164-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$0",
+          "code": null,
+          "message": "$4",
+          "source": "$2",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "0": "fatal",
+          "1": "fatal",
+          "2": "fatal",
+          "3": "error",
+          "4": "warning",
+          "5": "info",
+          "6": "info",
+          "7": "debug"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "journald-export",
+        "label": "journald Export Format",
+        "record_kind": "text-record",
+        "family_path": [
+          "systemd-journald"
+        ],
+        "match_groups": [
+          {
+            "scope": "systemd-journald",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "^_SYSTEMD_UNIT="
+                },
+                {
+                  "type": "regex",
+                  "value": "^PRIORITY="
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "journald-export",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^_TIMESTAMP="
+                },
+                {
+                  "type": "regex",
+                  "value": "^MESSAGE="
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.9
+        },
+        "parser_id": "journald-export-parser",
+        "canonical_fields": {
+          "timestamp": "$._TIMESTAMP",
+          "severity": "$.PRIORITY",
+          "code": "$.ERRNO",
+          "message": "$.MESSAGE",
+          "source": "$._SYSTEMD_UNIT",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": "$"
+        },
+        "event_boundary": "record_separator",
+        "severity_mapping": {
+          "0": "fatal",
+          "1": "fatal",
+          "2": "fatal",
+          "3": "error",
+          "4": "warning",
+          "5": "info",
+          "6": "info",
+          "7": "debug"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "windows-event-text",
+        "label": "Windows Event Log Text / Key-Value",
+        "record_kind": "text-record",
+        "family_path": [
+          "windows-event-log"
+        ],
+        "match_groups": [
+          {
+            "scope": "windows-event-log",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "EventID="
+                },
+                {
+                  "type": "regex",
+                  "value": "Provider Name="
+                },
+                {
+                  "type": "regex",
+                  "value": "<Event xmlns="
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "windows-event-text",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "EventID"
+                },
+                {
+                  "type": "regex",
+                  "value": "Level"
+                }
+              ],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "Provider Name"
+                }
+              ],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.92,
+          "medium": 0.8
+        },
+        "parser_id": "windows-event-text-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$2",
+          "code": "$3",
+          "message": "$5",
+          "source": "$4",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "1": "fatal",
+          "2": "error",
+          "3": "warning",
+          "4": "info",
+          "5": "debug"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "nginx-access",
+        "label": "Nginx Access Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "web-servers"
+        ],
+        "match_groups": [
+          {
+            "scope": "web-servers",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "GET /"
+                },
+                {
+                  "type": "regex",
+                  "value": "POST /"
+                },
+                {
+                  "type": "regex",
+                  "value": "HTTP/1."
+                },
+                {
+                  "type": "regex",
+                  "value": "HTTP/2."
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "nginx-access",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\s+-.*\"(GET|POST|PUT|DELETE|HEAD|OPTIONS)"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.88
+        },
+        "parser_id": "nginx-access-parser",
+        "canonical_fields": {
+          "timestamp": "$2",
+          "severity": null,
+          "code": "$4",
+          "message": "$3",
+          "source": "$1",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": "$3",
+          "attributes": {
+            "bytes_sent": "$5",
+            "referer": "$6",
+            "user_agent": "$7"
+          }
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {},
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "nginx-error",
+        "label": "Nginx Error Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "web-servers"
+        ],
+        "match_groups": [
+          {
+            "scope": "web-servers",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "GET /"
+                },
+                {
+                  "type": "regex",
+                  "value": "POST /"
+                },
+                {
+                  "type": "regex",
+                  "value": "HTTP/1."
+                },
+                {
+                  "type": "regex",
+                  "value": "HTTP/2."
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "nginx-error",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\d{4}/\\d{2}/\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+\\[\\w+\\]"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.9
+        },
+        "parser_id": "nginx-error-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$2",
+          "code": null,
+          "message": "$4",
+          "source": "$3",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "debug": "debug",
+          "info": "info",
+          "notice": "info",
+          "warn": "warning",
+          "error": "error",
+          "crit": "fatal",
+          "alert": "fatal",
+          "emerg": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "apache-combined",
+        "label": "Apache Combined Access Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "web-servers"
+        ],
+        "match_groups": [
+          {
+            "scope": "web-servers",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "GET /"
+                },
+                {
+                  "type": "regex",
+                  "value": "POST /"
+                },
+                {
+                  "type": "regex",
+                  "value": "HTTP/1."
+                },
+                {
+                  "type": "regex",
+                  "value": "HTTP/2."
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "apache-combined",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\S+\\s+\\S+\\s+\\S+\\s+\\[[^\\]]+\\]\\s+\"[A-Z]+\\s+.*HTTP/\\d\\.\\d\"\\s+\\d{3}"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.88
+        },
+        "parser_id": "apache-combined-parser",
+        "canonical_fields": {
+          "timestamp": "$2",
+          "severity": null,
+          "code": "$4",
+          "message": "$3",
+          "source": "$1",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": "$3",
+          "attributes": {
+            "referer": "$6",
+            "user_agent": "$7"
+          }
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {},
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "apache-error",
+        "label": "Apache Error Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "web-servers"
+        ],
+        "match_groups": [
+          {
+            "scope": "web-servers",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "GET /"
+                },
+                {
+                  "type": "regex",
+                  "value": "POST /"
+                },
+                {
+                  "type": "regex",
+                  "value": "HTTP/1."
+                },
+                {
+                  "type": "regex",
+                  "value": "HTTP/2."
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "apache-error",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\[[^\\]]+\\]\\s+\\[[:a-z]+\\]\\s+\\[pid\\s+\\d+\\]"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.9
+        },
+        "parser_id": "apache-error-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$2",
+          "code": "$3",
+          "message": "$5",
+          "source": "$4",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "emerg": "fatal",
+          "alert": "fatal",
+          "crit": "fatal",
+          "error": "error",
+          "warn": "warning",
+          "notice": "info",
+          "info": "info",
+          "debug": "debug"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "iis-w3c",
+        "label": "IIS W3C Extended Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "web-servers"
+        ],
+        "match_groups": [
+          {
+            "scope": "web-servers",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "GET /"
+                },
+                {
+                  "type": "regex",
+                  "value": "POST /"
+                },
+                {
+                  "type": "regex",
+                  "value": "HTTP/1."
+                },
+                {
+                  "type": "regex",
+                  "value": "HTTP/2."
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "iis-w3c",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^#Fields:"
+                },
+                {
+                  "type": "regex",
+                  "value": "^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+\\S+\\s+(GET|POST|PUT|DELETE)"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.88
+        },
+        "parser_id": "iis-w3c-parser",
+        "canonical_fields": {
+          "timestamp": "$1 $2",
+          "severity": null,
+          "code": "$5",
+          "message": "$4",
+          "source": "$3",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": "$4",
+          "attributes": null
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {},
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "postgres-csv",
+        "label": "PostgreSQL CSV Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "databases-structured"
+        ],
+        "match_groups": [
+          {
+            "scope": "databases-structured",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "postgres"
+                },
+                {
+                  "type": "regex",
+                  "value": "mysqld"
+                },
+                {
+                  "type": "regex",
+                  "value": "redis"
+                },
+                {
+                  "type": "regex",
+                  "value": "mongod"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "postgres-csv",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d+\\s+UTC,\"[^\"]*\",\"[^\"]*\""
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.9
+        },
+        "parser_id": "postgres-csv-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$4",
+          "code": "$6",
+          "message": "$7",
+          "source": "$2",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": {
+            "db": "$3",
+            "pid": "$5"
+          }
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "LOG": "info",
+          "NOTICE": "info",
+          "WARNING": "warning",
+          "ERROR": "error",
+          "FATAL": "fatal",
+          "PANIC": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "postgres-standard",
+        "label": "PostgreSQL Standard Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "databases-structured"
+        ],
+        "match_groups": [
+          {
+            "scope": "databases-structured",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "postgres"
+                },
+                {
+                  "type": "regex",
+                  "value": "mysqld"
+                },
+                {
+                  "type": "regex",
+                  "value": "redis"
+                },
+                {
+                  "type": "regex",
+                  "value": "mongod"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "postgres-standard",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\s+\\w+\\s+\\[\\d+\\]:\\s+\\[\\d+-\\d+\\]\\s+user="
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.95,
+          "medium": 0.85
+        },
+        "parser_id": "postgres-std-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$3",
+          "code": null,
+          "message": "$4",
+          "source": "PostgreSQL",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": {
+            "pid": "$2"
+          }
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "LOG": "info",
+          "WARNING": "warning",
+          "ERROR": "error",
+          "FATAL": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "mysql-slow-query",
+        "label": "MySQL Slow Query Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "databases-structured"
+        ],
+        "match_groups": [
+          {
+            "scope": "databases-structured",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "postgres"
+                },
+                {
+                  "type": "regex",
+                  "value": "mysqld"
+                },
+                {
+                  "type": "regex",
+                  "value": "redis"
+                },
+                {
+                  "type": "regex",
+                  "value": "mongod"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "mysql-slow-query",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^# Time:"
+                },
+                {
+                  "type": "regex",
+                  "value": "^# User@Host:"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.9
+        },
+        "parser_id": "mysql-slow-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": null,
+          "code": null,
+          "message": "$4",
+          "source": "$2",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": "$4",
+          "attributes": {
+            "query_time": "$3"
+          }
+        },
+        "event_boundary": "regex:^# Time:",
+        "severity_mapping": {},
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "redis-log-line",
+        "label": "Redis Server Log Line",
+        "record_kind": "text-record",
+        "family_path": [
+          "databases-structured"
+        ],
+        "match_groups": [
+          {
+            "scope": "databases-structured",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "postgres"
+                },
+                {
+                  "type": "regex",
+                  "value": "mysqld"
+                },
+                {
+                  "type": "regex",
+                  "value": "redis"
+                },
+                {
+                  "type": "regex",
+                  "value": "mongod"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "redis-log-line",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\d+:(M|S|C|p)\\s+\\d{2}\\s+[A-Za-z]{3}\\s+\\d{4}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+[*#.-]"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.9
+        },
+        "parser_id": "redis-line-parser",
+        "canonical_fields": {
+          "timestamp": "$2",
+          "severity": "$3",
+          "code": null,
+          "message": "$4",
+          "source": "Redis",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": {
+            "pid": "$1"
+          }
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          ".": "debug",
+          "-": "info",
+          "*": "notice",
+          "#": "warning"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "mongodb-log-kv",
+        "label": "MongoDB Key-Value / Standard Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "databases-structured"
+        ],
+        "match_groups": [
+          {
+            "scope": "databases-structured",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "postgres"
+                },
+                {
+                  "type": "regex",
+                  "value": "mysqld"
+                },
+                {
+                  "type": "regex",
+                  "value": "redis"
+                },
+                {
+                  "type": "regex",
+                  "value": "mongod"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "mongodb-log-kv",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+[-+]\\d{4}\\s+[IWEFS]\\s+[A-Z0-9_-]+\\s+\\[[^\\]]+\\]"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.9
+        },
+        "parser_id": "mongodb-kv-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$2",
+          "code": "$3",
+          "message": "$5",
+          "source": "$4",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "I": "info",
+          "W": "warning",
+          "E": "error",
+          "F": "fatal",
+          "S": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "github-actions-line",
+        "label": "GitHub Actions Workflow Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "ci-cd-pipelines"
+        ],
+        "match_groups": [
+          {
+            "scope": "ci-cd-pipelines",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "##[group]"
+                },
+                {
+                  "type": "regex",
+                  "value": "##[error]"
+                },
+                {
+                  "type": "regex",
+                  "value": "Running with gitlab-runner"
+                },
+                {
+                  "type": "regex",
+                  "value": "[INFO] Building"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "github-actions-line",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+Z\\s+(##\\[error\\]|##\\[warning\\]|##\\[group\\]|##\\[endgroup\\])?"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.88
+        },
+        "parser_id": "gha-line-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$2",
+          "code": null,
+          "message": "$3",
+          "source": "GitHub Actions",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "##[error]": "error",
+          "##[warning]": "warning"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "gitlab-ci-line",
+        "label": "GitLab CI Runner Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "ci-cd-pipelines"
+        ],
+        "match_groups": [
+          {
+            "scope": "ci-cd-pipelines",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "##[group]"
+                },
+                {
+                  "type": "regex",
+                  "value": "##[error]"
+                },
+                {
+                  "type": "regex",
+                  "value": "Running with gitlab-runner"
+                },
+                {
+                  "type": "regex",
+                  "value": "[INFO] Building"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "gitlab-ci-line",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^Running with gitlab-runner"
+                },
+                {
+                  "type": "regex",
+                  "value": "^\\x1b\\[0KSection-start:"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.95,
+          "medium": 0.85
+        },
+        "parser_id": "gitlab-ci-line-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": null,
+          "code": null,
+          "message": "$2",
+          "source": "GitLab CI",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {},
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "jenkins-console-line",
+        "label": "Jenkins Console Output Line",
+        "record_kind": "text-record",
+        "family_path": [
+          "ci-cd-pipelines"
+        ],
+        "match_groups": [
+          {
+            "scope": "ci-cd-pipelines",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "##[group]"
+                },
+                {
+                  "type": "regex",
+                  "value": "##[error]"
+                },
+                {
+                  "type": "regex",
+                  "value": "Running with gitlab-runner"
+                },
+                {
+                  "type": "regex",
+                  "value": "[INFO] Building"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "jenkins-console-line",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+Z\\]"
+                },
+                {
+                  "type": "regex",
+                  "value": "^\\[Jenkins\\]"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.92,
+          "medium": 0.8
+        },
+        "parser_id": "jenkins-line-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$2",
+          "code": null,
+          "message": "$3",
+          "source": "Jenkins",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "newline",
+        "severity_mapping": {
+          "[ERROR]": "error",
+          "[WARNING]": "warning",
+          "[INFO]": "info"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "java-exception-stacktrace",
+        "label": "Standard Java Exception Stacktrace",
+        "record_kind": "text-record",
+        "family_path": [
+          "java-jvm-stacktrace"
+        ],
+        "match_groups": [
+          {
+            "scope": "java-jvm-stacktrace",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "Exception in thread"
+                },
+                {
+                  "type": "regex",
+                  "value": "\\tat [a-zA-Z0-9_.]+\\("
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "java-exception-stacktrace",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^[a-zA-Z0-9_.]+(Exception|Error):"
+                },
+                {
+                  "type": "regex",
+                  "value": "\\tat [a-zA-Z0-9_.]+\\("
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.92
+        },
+        "parser_id": "java-stacktrace-parser",
+        "canonical_fields": {
+          "timestamp": null,
+          "severity": "error",
+          "code": "$1",
+          "message": "$2",
+          "source": "$3",
+          "stacktrace": "$0",
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "regex:^[a-zA-Z0-9_.]+(Exception|Error):",
+        "severity_mapping": {},
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "log4j-multiline",
+        "label": "Log4j / Logback Multiline Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "java-jvm-stacktrace"
+        ],
+        "match_groups": [
+          {
+            "scope": "java-jvm-stacktrace",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "Exception in thread"
+                },
+                {
+                  "type": "regex",
+                  "value": "\\tat [a-zA-Z0-9_.]+\\("
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "log4j-multiline",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\[[^\\]]+\\]\\s+(TRACE|DEBUG|INFO|WARN|ERROR|FATAL)"
+                }
+              ],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "\\tat [a-zA-Z0-9_.]+\\("
+                }
+              ],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.9
+        },
+        "parser_id": "log4j-multiline-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$2",
+          "code": null,
+          "message": "$4",
+          "source": "$3",
+          "stacktrace": "$5",
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "regex:^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}",
+        "severity_mapping": {
+          "TRACE": "trace",
+          "DEBUG": "debug",
+          "INFO": "info",
+          "WARN": "warning",
+          "ERROR": "error",
+          "FATAL": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "python-traceback",
+        "label": "Python Native Traceback",
+        "record_kind": "text-record",
+        "family_path": [
+          "python-logging"
+        ],
+        "match_groups": [
+          {
+            "scope": "python-logging",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "Traceback (most recent call last):"
+                },
+                {
+                  "type": "regex",
+                  "value": "File \"[^\"]+\", line \\d+, in "
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "python-traceback",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^Traceback \\(most recent call last\\):"
+                },
+                {
+                  "type": "regex",
+                  "value": "File \"[^\"]+\", line \\d+, in "
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.95
+        },
+        "parser_id": "python-traceback-parser",
+        "canonical_fields": {
+          "timestamp": null,
+          "severity": "error",
+          "code": "$2",
+          "message": "$3",
+          "source": "$1",
+          "stacktrace": "$0",
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "regex:^Traceback \\(most recent call last\\):",
+        "severity_mapping": {},
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "python-multiline-log",
+        "label": "Python Multiline Logging Format",
+        "record_kind": "text-record",
+        "family_path": [
+          "python-logging"
+        ],
+        "match_groups": [
+          {
+            "scope": "python-logging",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "Traceback (most recent call last):"
+                },
+                {
+                  "type": "regex",
+                  "value": "File \"[^\"]+\", line \\d+, in "
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "python-multiline-log",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2},\\d{3}\\s+-\\s+\\w+\\s+-\\s+(DEBUG|INFO|WARNING|ERROR|CRITICAL)"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.95,
+          "medium": 0.85
+        },
+        "parser_id": "python-multiline-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$2",
+          "code": null,
+          "message": "$4",
+          "source": "$3",
+          "stacktrace": "$5",
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "regex:^\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}",
+        "severity_mapping": {
+          "DEBUG": "debug",
+          "INFO": "info",
+          "WARNING": "warning",
+          "ERROR": "error",
+          "CRITICAL": "fatal"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "rust-panic-backtrace",
+        "label": "Rust Panic Backtrace",
+        "record_kind": "text-record",
+        "family_path": [
+          "rust-diagnostics"
+        ],
+        "match_groups": [
+          {
+            "scope": "rust-diagnostics",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "thread '.*' panicked at"
+                },
+                {
+                  "type": "regex",
+                  "value": "stack backtrace:"
+                },
+                {
+                  "type": "regex",
+                  "value": "error[E\\d{4}]:"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "rust-panic-backtrace",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "thread '.*' panicked at"
+                },
+                {
+                  "type": "regex",
+                  "value": "stack backtrace:"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.95
+        },
+        "parser_id": "rust-panic-parser",
+        "canonical_fields": {
+          "timestamp": null,
+          "severity": "fatal",
+          "code": null,
+          "message": "$1",
+          "source": "$2",
+          "stacktrace": "$0",
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "regex:^thread '.*' panicked at",
+        "severity_mapping": {},
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "cargo-rustc-error",
+        "label": "Cargo / rustc Compiler Diagnostics",
+        "record_kind": "text-record",
+        "family_path": [
+          "rust-diagnostics"
+        ],
+        "match_groups": [
+          {
+            "scope": "rust-diagnostics",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "thread '.*' panicked at"
+                },
+                {
+                  "type": "regex",
+                  "value": "stack backtrace:"
+                },
+                {
+                  "type": "regex",
+                  "value": "error[E\\d{4}]:"
+                }
+              ],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "cargo-rustc-error",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^error\\[E\\d{4}\\]:"
+                },
+                {
+                  "type": "regex",
+                  "value": "^  --> [a-zA-Z0-9_/\\\\.-]+:\\d+:\\d+"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.92
+        },
+        "parser_id": "cargo-rustc-parser",
+        "canonical_fields": {
+          "timestamp": null,
+          "severity": "error",
+          "code": "$1",
+          "message": "$2",
+          "source": "$3",
+          "stacktrace": null,
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "regex:^error\\[E\\d{4}\\]:",
+        "severity_mapping": {},
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "go-panic-stack",
+        "label": "Go Panic Stack Trace",
+        "record_kind": "text-record",
+        "family_path": [
+          "golang-stacktrace"
+        ],
+        "match_groups": [
+          {
+            "scope": "golang-stacktrace",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^panic:"
+                },
+                {
+                  "type": "regex",
+                  "value": "^goroutine \\d+ \\["
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "go-panic-stack",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^panic:"
+                },
+                {
+                  "type": "regex",
+                  "value": "^goroutine \\d+ \\[running\\]:"
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.99,
+          "medium": 0.95
+        },
+        "parser_id": "go-panic-parser",
+        "canonical_fields": {
+          "timestamp": null,
+          "severity": "fatal",
+          "code": null,
+          "message": "$1",
+          "source": null,
+          "stacktrace": "$0",
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "regex:^panic:",
+        "severity_mapping": {},
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "dotnet-exception-stacktrace",
+        "label": ".NET Exception Stacktrace",
+        "record_kind": "text-record",
+        "family_path": [
+          "dotnet-diagnostics"
+        ],
+        "match_groups": [
+          {
+            "scope": "dotnet-diagnostics",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "Unhandled Exception:"
+                },
+                {
+                  "type": "regex",
+                  "value": "\\s+at [a-zA-Z0-9_.]+\\("
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          },
+          {
+            "scope": "dotnet-exception-stacktrace",
+            "detect": {
+              "required": [
+                {
+                  "type": "regex",
+                  "value": "^[a-zA-Z0-9_.]+(Exception):"
+                },
+                {
+                  "type": "regex",
+                  "value": "\\s+at [a-zA-Z0-9_.]+\\("
+                }
+              ],
+              "any": [],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.98,
+          "medium": 0.9
+        },
+        "parser_id": "dotnet-stacktrace-parser",
+        "canonical_fields": {
+          "timestamp": null,
+          "severity": "error",
+          "code": "$1",
+          "message": "$2",
+          "source": null,
+          "stacktrace": "$0",
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "regex:^[a-zA-Z0-9_.]+Exception:",
+        "severity_mapping": {},
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      },
+      {
+        "id": "generic-app-multiline",
+        "label": "Generic Application Multiline Log",
+        "record_kind": "text-record",
+        "family_path": [
+          "generic-multiline-app"
+        ],
+        "match_groups": [
+          {
+            "scope": "generic-multiline-app",
+            "detect": {
+              "required": [],
+              "any": [
+                {
+                  "type": "regex",
+                  "value": "\\n\\s+at "
+                },
+                {
+                  "type": "regex",
+                  "value": "\\n\\s+in "
+                }
+              ],
+              "forbidden": []
+            }
+          }
+        ],
+        "confidence": {
+          "high": 0.6,
+          "medium": 0.4
+        },
+        "parser_id": "generic-multiline-parser",
+        "canonical_fields": {
+          "timestamp": "$1",
+          "severity": "$2",
+          "code": null,
+          "message": "$3",
+          "source": null,
+          "stacktrace": "$4",
+          "trace_id": null,
+          "request": null,
+          "attributes": null
+        },
+        "event_boundary": "regex:^\\d{4}-\\d{2}-\\d{2}|^\\d{2}:\\d{2}:\\d{2}",
+        "severity_mapping": {
+          "ERROR": "error",
+          "WARN": "warning",
+          "INFO": "info"
+        },
+        "fixture_plan": {
+          "valid": 3,
+          "malformed": 2,
+          "mixed": 2,
+          "adversarial": 2
+        },
+        "fallback": "raw"
+      }
+    ],
+    "fallback": "raw"
+  }
+}
