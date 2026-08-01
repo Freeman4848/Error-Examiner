@@ -83,6 +83,23 @@ impl ErrorExplainerApp {
                 Err(error) => self.status = error,
             }
         }
+        while let Ok(result) = self.schema_receiver.try_recv() {
+            self.schema_pending = false;
+            match result {
+                Ok(draft) => {
+                    self.schema_status = format!(
+                        "Draft validated: {} event(s), {}",
+                        draft.event_count,
+                        draft.format_ids.join(" + ")
+                    );
+                    self.schema_draft = Some(draft);
+                }
+                Err(error) => {
+                    self.schema_status = format!("Draft rejected: {error}");
+                    self.schema_draft = None;
+                }
+            }
+        }
     }
 
     fn handle_answer(
@@ -145,6 +162,7 @@ impl ErrorExplainerApp {
             settings: self.settings.clone(),
             api_key: self.api_key.clone(),
             messages,
+            system_prompt: None,
         };
         let sender = self.worker_sender.clone();
         let context = context.clone();

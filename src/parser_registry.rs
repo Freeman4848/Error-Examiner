@@ -126,6 +126,51 @@ pub(crate) fn coverage() -> Coverage {
     result
 }
 
+pub(crate) fn validate_draft(
+    text: &str,
+    sample: &str,
+) -> Result<(String, Vec<String>, usize), String> {
+    let schema: Schema =
+        serde_json::from_str(text).map_err(|error| format!("Schema JSON: {error}"))?;
+    validate_schema(&schema)?;
+    let existing: HashSet<String> = built_in().formats.into_iter().map(|item| item.id).collect();
+    if let Some(duplicate) = schema
+        .formats
+        .iter()
+        .find(|item| existing.contains(&item.id))
+    {
+        return Err(format!(
+            "built-in format id already exists: {}",
+            duplicate.id
+        ));
+    }
+    let parsed = crate::parser_schema::parse_with_schema(sample, &schema);
+    if !parsed.supported || parsed.events.is_empty() {
+        return Err("schema does not parse the supplied sample".into());
+    }
+    let json = serde_json::to_string_pretty(&schema).map_err(|error| error.to_string())?;
+    Ok((json, parsed.format_ids, parsed.events.len()))
+}
+
+pub(crate) fn install_draft(text: &str) -> Result<PathBuf, String> {
+    let schema: Schema = serde_json::from_str(text).map_err(|error| error.to_string())?;
+    validate_schema(&schema)?;
+    let id = schema
+        .formats
+        .first()
+        .ok_or("schema contains no formats")?
+        .id
+        .clone();
+    let dir = crate::storage::app_dir().join("schemas");
+    fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
+    let path = dir.join(format!("{id}.json"));
+    if path.exists() {
+        return Err(format!("schema already exists: {id}"));
+    }
+    fs::write(&path, text).map_err(|error| error.to_string())?;
+    Ok(path)
+}
+
 fn registry() -> &'static RwLock<Schema> {
     static REGISTRY: OnceLock<RwLock<Schema>> = OnceLock::new();
     REGISTRY.get_or_init(|| RwLock::new(built_in()))

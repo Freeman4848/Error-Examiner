@@ -16,6 +16,7 @@ mod parser_schema_tests;
 mod parser_text;
 mod preprocess;
 mod preprocess_raw;
+mod schema_lab;
 mod storage;
 mod theme;
 mod ui;
@@ -152,6 +153,11 @@ struct ErrorExplainerApp {
     active_chat: usize,
     schema_registry: parser_registry::RegistryStatus,
     schema_coverage: parser_registry::Coverage,
+    schema_sender: mpsc::Sender<Result<schema_lab::SchemaDraft, String>>,
+    schema_receiver: mpsc::Receiver<Result<schema_lab::SchemaDraft, String>>,
+    schema_draft: Option<schema_lab::SchemaDraft>,
+    schema_pending: bool,
+    schema_status: String,
     settings: ProviderSettings,
     api_key: String,
     status: String,
@@ -207,6 +213,7 @@ impl ErrorExplainerApp {
         let appearance: Appearance = storage::load_json("appearance.json");
         let (worker_sender, worker_receiver) = mpsc::channel();
         let (model_sender, model_receiver) = mpsc::channel();
+        let (schema_sender, schema_receiver) = mpsc::channel();
         let (hotkey_manager, hotkey_receiver) = hotkey::register(&creation_context.egui_ctx);
         let app_icon_texture = load_app_texture(&creation_context.egui_ctx);
         let schema_registry = parser_registry::reload_user_schemas();
@@ -240,6 +247,11 @@ impl ErrorExplainerApp {
             active_chat: workspace.active,
             schema_registry,
             schema_coverage,
+            schema_sender,
+            schema_receiver,
+            schema_draft: None,
+            schema_pending: false,
+            schema_status: "Load a log in Chat to begin.".to_owned(),
             settings,
             api_key: String::new(),
             status: format!("Ready · {HOTKEY_LABEL}"),

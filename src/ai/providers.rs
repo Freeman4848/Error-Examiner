@@ -8,7 +8,7 @@ pub(super) fn ask_openai(
     let input: Vec<Value> = messages.iter().map(openai_response_message).collect();
     let mut payload = json!({
         "model": request.settings.model,
-        "instructions": system_prompt(),
+        "instructions": system_prompt(request),
         "input": input,
         "max_output_tokens": request.settings.max_output_tokens,
         "store": false
@@ -47,7 +47,7 @@ pub(super) fn ask_openai_compatible(
     request: &AiRequest,
     messages: &[ChatMessage],
 ) -> Result<AiAnswer, String> {
-    let mut api_messages = vec![json!({"role": "system", "content": system_prompt()})];
+    let mut api_messages = vec![json!({"role": "system", "content": system_prompt(request)})];
     api_messages.extend(messages.iter().map(openai_chat_message));
     let payload = json!({
         "model": request.settings.model,
@@ -93,7 +93,7 @@ pub(super) fn ask_lm_studio(
     let payload = json!({
         "model": model,
         "input": transcript,
-        "system_prompt": system_prompt(),
+        "system_prompt": system_prompt(request),
         "max_output_tokens": request.settings.max_output_tokens,
         "store": false
     });
@@ -182,7 +182,7 @@ pub(super) fn ask_gemini(
         })
         .collect();
     let payload = json!({
-        "systemInstruction": {"parts": [{"text": system_prompt()}]},
+        "systemInstruction": {"parts": [{"text": system_prompt(request)}]},
         "contents": contents,
         "generationConfig": {"maxOutputTokens": request.settings.max_output_tokens}
     });
@@ -244,7 +244,7 @@ pub(super) fn ask_anthropic(
         .collect();
     let payload = json!({
         "model": request.settings.model,
-        "system": system_prompt(),
+        "system": system_prompt(request),
         "messages": api_messages,
         "max_tokens": request.settings.max_output_tokens
     });
@@ -316,7 +316,7 @@ fn ask_lm_studio_vision(
     root: &str,
     model: String,
 ) -> Result<AiAnswer, String> {
-    let mut api_messages = vec![json!({"role": "system", "content": system_prompt()})];
+    let mut api_messages = vec![json!({"role": "system", "content": system_prompt(request)})];
     api_messages.extend(messages.iter().map(openai_chat_message));
     let payload = json!({
         "model": model,

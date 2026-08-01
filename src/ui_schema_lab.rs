@@ -75,12 +75,80 @@ impl ErrorExplainerApp {
                         "{} characters available for schema validation",
                         log.original_chars
                     ));
-                    ui.add_enabled(false, egui::Button::new("Generate new schema"))
-                        .on_disabled_hover_text("Generator is the next isolated block.");
+                    if ui
+                        .add_enabled(
+                            !self.schema_pending,
+                            egui::Button::new(if self.schema_pending {
+                                "Generating and validating…"
+                            } else {
+                                "Generate new schema"
+                            }),
+                        )
+                        .clicked()
+                    {
+                        self.start_schema_generation(context);
+                    }
                 } else {
                     ui.label("Load a log in Chat; Schema Lab will use that current file.");
                     ui.add_enabled(false, egui::Button::new("Generate new schema"));
                 }
+                ui.label(RichText::new(&self.schema_status).color(colors.muted));
+
+                let mut install = false;
+                if let Some(draft) = &self.schema_draft {
+                    ui.separator();
+                    ui.horizontal(|ui| {
+                        ui.heading("Validated schema preview");
+                        if ui.button("Copy JSON").clicked() {
+                            ui.output_mut(|output| output.copied_text = draft.json.clone());
+                        }
+                        install = ui.button("Install schema").clicked();
+                    });
+                    ScrollArea::vertical().max_height(320.0).show(ui, |ui| {
+                        ui.add(
+                            TextEdit::multiline(&mut draft.json.clone())
+                                .code_editor()
+                                .desired_width(f32::INFINITY)
+                                .interactive(false),
+                        );
+                    });
+                }
+                if install {
+                    self.install_schema_draft();
+                }
             });
+    }
+
+    fn start_schema_generation(&mut self, context: &egui::Context) {
+        let Some(log) = &self.prepared_log else {
+            return;
+        };
+        self.schema_pending = true;
+        self.schema_draft = None;
+        self.schema_status = format!("Generating with {}…", self.settings.provider.label());
+        let settings = self.settings.clone();
+        let api_key = self.api_key.clone();
+        let name = log.name.clone();
+        let raw = log.raw_preview.clone();
+        let sender = self.schema_sender.clone();
+        let repaint = context.clone();
+        std::thread::spawn(move || {
+            let result = schema_lab::generate(settings, api_key, name, raw);
+            let _ = sender.send(result);
+            repaint.request_repaint();
+        });
+    }
+
+    fn install_schema_draft(&mut self) {
+        let Some(draft) = &self.schema_draft else {
+            return;
+        };
+        match schema_lab::install(draft) {
+            Ok(path) => {
+                self.schema_registry = parser_registry::reload_user_schemas();
+                self.schema_status = format!("Installed locally: {path}");
+            }
+            Err(error) => self.schema_status = format!("Install failed: {error}"),
+        }
     }
 }
