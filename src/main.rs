@@ -9,6 +9,7 @@ mod hotkey;
 mod linux_hotkey;
 #[cfg(target_os = "linux")]
 mod linux_tray;
+mod parser_registry;
 mod parser_schema;
 #[cfg(test)]
 mod parser_schema_tests;
@@ -45,6 +46,13 @@ const APP_NAME: &str = "Error Explainer";
 const HOTKEY_LABEL: &str = "Ctrl+Shift+Alt+C";
 
 fn main() -> eframe::Result<()> {
+    let registry = parser_registry::reload_user_schemas();
+    let coverage = parser_registry::coverage();
+    debug_assert!(registry.built_in > 0);
+    debug_assert_eq!(
+        coverage.covered + coverage.partial + coverage.raw,
+        coverage.total
+    );
     let startup_command = command_from_args();
     let command_server = match command::start_server() {
         Ok(server) => server,

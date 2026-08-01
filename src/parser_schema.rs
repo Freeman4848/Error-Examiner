@@ -1,7 +1,6 @@
+use crate::parser_registry::{Condition, Detect, FormatSchema, ParserSpec, Schema, Validation};
 use regex::{Regex, RegexBuilder};
-use serde::Deserialize;
 use serde_json::Value;
-use std::{collections::HashSet, sync::OnceLock};
 
 #[derive(Clone)]
 pub(crate) struct LogEvent {
@@ -51,85 +50,13 @@ pub(crate) struct ParseOutcome {
     pub(crate) supported: bool,
 }
 
-#[derive(Deserialize)]
-struct Schema {
-    schema_version: u32,
-    fallback: String,
-    formats: Vec<FormatSchema>,
-}
-
-#[derive(Deserialize)]
-struct FormatSchema {
-    id: String,
-    record_kind: String,
-    detect: Detect,
-    parser: ParserSpec,
-    validation: Validation,
-}
-
-#[derive(Deserialize)]
-struct Detect {
-    all: Vec<Condition>,
-    any: Vec<Condition>,
-}
-
-#[derive(Deserialize)]
-struct Condition {
-    kind: String,
-    value: String,
-}
-
-#[derive(Deserialize)]
-struct Validation {
-    require_events: bool,
-    require_content: bool,
-}
-
-#[derive(Deserialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
-enum ParserSpec {
-    TextBlocks {
-        start_regex: String,
-        severity: String,
-        preamble_severity: String,
-        include_preamble: bool,
-    },
-    LineBlocks {
-        start_regex: String,
-        severity_capture: String,
-        default_severity: String,
-    },
-    WholeText {
-        severity: String,
-    },
-    Buildkit,
-    JsonFields {
-        source_suffix: String,
-        timestamp_paths: Vec<String>,
-        severity_paths: Vec<String>,
-        default_severity: String,
-        status_paths: Vec<String>,
-        nonzero_status_is_error: bool,
-        status_from_text: bool,
-        fields: Vec<FieldSpec>,
-        fingerprint_paths: Vec<String>,
-        normalize_fingerprint_digits: bool,
-    },
-}
-
-#[derive(Deserialize)]
-struct FieldSpec {
-    label: String,
-    paths: Vec<String>,
-}
-
 pub(crate) fn parse(input: &str) -> ParseOutcome {
-    let schema = schema();
+    let schema = crate::parser_registry::schema();
     let trimmed = input.trim();
     if let Some(records) = json_records(trimmed) {
-        return parse_json_records(schema, &records);
+        return parse_json_records(&schema, &records);
     }
-    let Some(format) = best_format(schema, "text", None, trimmed) else {
+    let Some(format) = best_format(&schema, "text", None, trimmed) else {
         return fallback(Vec::new());
     };
     let events = parse_text(format, trimmed);
@@ -412,22 +339,4 @@ fn normalize_digits(text: &str) -> String {
         }
     }
     result
-}
-
-fn schema() -> &'static Schema {
-    static SCHEMA: OnceLock<Schema> = OnceLock::new();
-    SCHEMA.get_or_init(|| {
-        let schema: Schema =
-            serde_json::from_str(include_str!("../parser-catalog/executable-parser-v3.json"))
-                .expect("embedded parser schema v3 must be valid");
-        assert_eq!(schema.schema_version, 3);
-        assert_eq!(schema.fallback, "raw");
-        let ids: HashSet<_> = schema.formats.iter().map(|format| &format.id).collect();
-        assert_eq!(
-            ids.len(),
-            schema.formats.len(),
-            "duplicate parser format id"
-        );
-        schema
-    })
 }
