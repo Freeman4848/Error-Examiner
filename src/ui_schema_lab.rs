@@ -24,21 +24,21 @@ impl ErrorExplainerApp {
                     .inner_margin(egui::Margin::same(18.0))
                     .show(ui, |ui| {
                         ui.label(
-                            RichText::new("VERIFIED APPLICATION TYPES")
+                            RichText::new("VERIFIED PARSER PROFILES")
                                 .small()
                                 .color(colors.muted),
                         );
                         ui.label(
                             RichText::new(format!(
-                                "{} / {}",
-                                self.schema_coverage.covered, self.schema_coverage.total
+                                "{}",
+                                self.schema_registry.built_in + self.schema_registry.user
                             ))
                             .size(34.0)
                             .strong()
                             .color(colors.assistant),
                         );
                         ui.label(format!(
-                            "{} built-in parser formats · {} installed user formats",
+                            "{} built-in · {} installed user profiles",
                             self.schema_registry.built_in, self.schema_registry.user
                         ));
                     });
@@ -47,7 +47,6 @@ impl ErrorExplainerApp {
                 ui.horizontal(|ui| {
                     if ui.button("Reload installed schemas").clicked() {
                         self.schema_registry = parser_registry::reload_user_schemas();
-                        self.schema_coverage = parser_registry::coverage();
                     }
                     if !self.schema_registry.rejected.is_empty() {
                         ui.colored_label(

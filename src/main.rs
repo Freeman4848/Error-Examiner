@@ -152,7 +152,6 @@ struct ErrorExplainerApp {
     chat_tabs: Vec<chats::ChatTab>,
     active_chat: usize,
     schema_registry: parser_registry::RegistryStatus,
-    schema_coverage: parser_registry::Coverage,
     schema_sender: mpsc::Sender<Result<schema_lab::SchemaDraft, String>>,
     schema_receiver: mpsc::Receiver<Result<schema_lab::SchemaDraft, String>>,
     schema_draft: Option<schema_lab::SchemaDraft>,
@@ -218,6 +217,10 @@ impl ErrorExplainerApp {
         let app_icon_texture = load_app_texture(&creation_context.egui_ctx);
         let schema_registry = parser_registry::reload_user_schemas();
         let schema_coverage = parser_registry::coverage();
+        debug_assert_eq!(
+            schema_coverage.covered + schema_coverage.partial + schema_coverage.raw,
+            schema_coverage.total
+        );
         command_server.set_context(&creation_context.egui_ctx);
 
         #[cfg(target_os = "windows")]
@@ -246,7 +249,6 @@ impl ErrorExplainerApp {
             chat_tabs: workspace.tabs,
             active_chat: workspace.active,
             schema_registry,
-            schema_coverage,
             schema_sender,
             schema_receiver,
             schema_draft: None,
