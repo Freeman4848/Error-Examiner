@@ -118,6 +118,7 @@ impl ErrorExplainerApp {
                             });
                             ui.horizontal_wrapped(|ui| {
                                 ui.label(if log.normalized { "Pre-parsed" } else { "Raw" });
+                                ui.label(format!("Sent: {}", log.selected_variant));
                                 ui.label(format!("Format: {}", log.detected_format));
                                 ui.label(format!(
                                     "{} → {} chars",
@@ -228,6 +229,8 @@ impl ErrorExplainerApp {
                     self.api_key.clear();
                     self.available_models.clear();
                 }
+
+                ui_settings_helpers::custom_protocol_picker(self, ui);
 
                 if self.settings.provider != ProviderKind::Mock {
                     ui.label("Base URL");

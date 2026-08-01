@@ -1,0 +1,4 @@
+TypeError: Cannot read property 'undef' of null
+    at http://path/to/file.js:47:22
+    at foo (http://path/to/file.js:52:15)
+    at bar (http://path/to/file.js:108:168)

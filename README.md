@@ -21,8 +21,11 @@ to an AI provider and returns a testable explanation.
   - LM Studio native REST API at `http://localhost:1234`
   - Google Gemini
   - Anthropic
+  - Custom AI API using OpenAI-, Gemini-, or Anthropic-compatible protocols
   - offline Demo mode
 - Tray integrated into the same executable on Windows and Linux.
+- Executable parser schema with 57 formats, 83 verified cases, and Raw fallback.
+- Raw/Parsed size comparison sends the smaller representation to the model.
 - Settings and About & Help views.
 
 ## Screenshots

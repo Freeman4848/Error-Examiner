@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "supported_formats_source": "executable-parser-v3.json#formats[*].id",
+  "verified_fixture_sets": [
+    {"name": "LogHub", "files": 16, "status": "audited"},
+    {"name": "runtime-errors", "files": 13, "status": "tested"},
+    {"name": "GCP structured JSON", "files": 1, "status": "tested"},
+    {"name": "Cargo/rustc", "files": 1, "status": "tested"},
+    {"name": "browser stacks", "files": 4, "status": "tested"},
+    {"name": "gap closure corpus", "files": 48, "status": "tested"}
+  ],
+  "closed_families": [
+    "browser CSP/CORS, minified stacks and framework overlays",
+    ".NET exceptions and MSBuild",
+    "Go panic and test output",
+    "Kubernetes events and prefixed pod logs",
+    "Nginx access/error logs",
+    "MySQL, Redis and MongoDB logs",
+    "systemd journal short and JSON export",
+    "ASan, GDB and native crash text",
+    "Docker BuildKit/buildx failures"
+  ],
+  "known_gaps": [],
+  "input_requirements": [
+    "source-map symbolication requires the matching source map",
+    "binary core files require a text backtrace exported by GDB",
+    "arbitrary pod payloads are parsed by their inner format or remain raw"
+  ],
+  "unknown_policy": "raw"
+}

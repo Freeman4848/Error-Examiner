@@ -1,0 +1,344 @@
+[
+  {
+    "file": "android.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "WARNING": 5,
+      "INFO": 35
+    },
+    "parsed_severity": {
+      "WARNING": 5,
+      "INFO": 35
+    }
+  },
+  {
+    "file": "apache.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "ERROR": 20,
+      "INFO": 20
+    },
+    "parsed_severity": {
+      "ERROR": 20,
+      "INFO": 20
+    }
+  },
+  {
+    "file": "bgl.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "INFO": 36,
+      "CRITICAL": 4
+    },
+    "parsed_severity": {
+      "INFO": 36,
+      "CRITICAL": 4
+    }
+  },
+  {
+    "file": "hadoop.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "INFO": 21,
+      "ERROR": 1,
+      "WARNING": 18
+    },
+    "parsed_severity": {
+      "INFO": 21,
+      "ERROR": 1,
+      "WARNING": 18
+    }
+  },
+  {
+    "file": "hdfs.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "WARNING": 20,
+      "INFO": 20
+    },
+    "parsed_severity": {
+      "WARNING": 20,
+      "INFO": 20
+    }
+  },
+  {
+    "file": "healthapp.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "UNKNOWN": 33,
+      "ERROR": 7
+    },
+    "parsed_severity": {
+      "UNKNOWN": 33,
+      "ERROR": 7
+    }
+  },
+  {
+    "file": "hpc.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "ERROR": 17,
+      "WARNING": 2,
+      "CRITICAL": 1,
+      "UNKNOWN": 20
+    },
+    "parsed_severity": {
+      "ERROR": 17,
+      "WARNING": 2,
+      "CRITICAL": 1,
+      "UNKNOWN": 20
+    }
+  },
+  {
+    "file": "linux.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "ERROR": 20,
+      "UNKNOWN": 20
+    },
+    "parsed_severity": {
+      "ERROR": 20,
+      "UNKNOWN": 20
+    }
+  },
+  {
+    "file": "mac.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "INFO": 1,
+      "ERROR": 18,
+      "WARNING": 1,
+      "UNKNOWN": 20
+    },
+    "parsed_severity": {
+      "INFO": 1,
+      "ERROR": 18,
+      "WARNING": 1,
+      "UNKNOWN": 20
+    }
+  },
+  {
+    "file": "openssh.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "ERROR": 12,
+      "UNKNOWN": 28
+    },
+    "parsed_severity": {
+      "ERROR": 12,
+      "UNKNOWN": 28
+    }
+  },
+  {
+    "file": "openstack.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "WARNING": 12,
+      "INFO": 28
+    },
+    "parsed_severity": {
+      "WARNING": 12,
+      "INFO": 28
+    }
+  },
+  {
+    "file": "proxifier.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "ERROR": 20,
+      "UNKNOWN": 20
+    },
+    "parsed_severity": {
+      "ERROR": 20,
+      "UNKNOWN": 20
+    }
+  },
+  {
+    "file": "spark.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "INFO": 40
+    },
+    "parsed_severity": {
+      "INFO": 40
+    }
+  },
+  {
+    "file": "thunderbird.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "ERROR": 20,
+      "UNKNOWN": 20
+    },
+    "parsed_severity": {
+      "ERROR": 20,
+      "UNKNOWN": 20
+    }
+  },
+  {
+    "file": "windows.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "INFO": 40
+    },
+    "parsed_severity": {
+      "INFO": 40
+    }
+  },
+  {
+    "file": "zookeeper.log",
+    "status": "OK",
+    "raw_events": 40,
+    "parsed_events": 40,
+    "checks": {
+      "events": true,
+      "signatures": true,
+      "severity": true
+    },
+    "missing_signatures": 0,
+    "extra_signatures": 0,
+    "raw_severity": {
+      "WARNING": 20,
+      "INFO": 20
+    },
+    "parsed_severity": {
+      "WARNING": 20,
+      "INFO": 20
+    }
+  }
+]

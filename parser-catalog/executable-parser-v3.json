@@ -1,0 +1,460 @@
+{
+  "schema_version": 3,
+  "fallback": "raw",
+  "formats": [
+    {
+      "id": "cargo-rustc-error",
+      "record_kind": "text",
+      "detect": {
+        "all": [
+          {"kind": "regex", "value": "^error\\[E\\d{4}\\]:"},
+          {"kind": "regex", "value": "^\\s+--> [^\\n]+:\\d+:\\d+"}
+        ],
+        "any": []
+      },
+      "parser": {
+        "kind": "text_blocks",
+        "start_regex": "^error(?:\\[E\\d{4}\\])?:",
+        "severity": "ERROR",
+        "preamble_severity": "INFO",
+        "include_preamble": true
+      },
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "docker-cli-error", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\[\\]\\nerror: no such object:"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "docker-buildkit-error", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^(?:#\\d+|\\s*=>).*"}, {"kind": "regex", "value": "(?:ERROR|error): failed to solve|failed to solve:"}], "any": []},
+      "parser": {"kind": "buildkit"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "gcc-compiler", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^.+\\.c:\\d+:\\d+: error:"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "gpp-compiler", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^.+\\.(?:cc|cpp|cxx):\\d+:\\d+: error:"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "git-cli-error", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^fatal: not a git repository"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "FATAL"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "javac-compiler", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^.+\\.java:\\d+: error:"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "java-exception", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^Exception in thread \\\""}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "node-exception", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^(?:TypeError|ReferenceError|SyntaxError|RangeError):"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "npm-cli-error", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^npm (?:ERR!|error)"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "postgres-client-error", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^psql: error:"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "python-traceback", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^Traceback \\(most recent call last\\):"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "shell-command-not-found", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^(?:bash|sh|zsh): .*command not found"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "browser-chromium-v8-stack", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^(?:Error|TypeError|ReferenceError|SyntaxError|RangeError):"}, {"kind": "regex", "value": "^\\s*at .*https?://"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "browser-firefox-stack", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^(?:Error|TypeError|ReferenceError|SyntaxError|InternalError|RangeError):"}, {"kind": "regex", "value": "^[^\\n]*@https?://"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "browser-safari-webkit-stack", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^(?:Error|TypeError|ReferenceError|SyntaxError|RangeError):"}, {"kind": "regex", "value": "^[^\\n]*@https?://"}], "any": [{"kind": "regex", "value": "@\\[native code\\]|^global code@"}]},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "browser-console-security", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "Cross-Origin Request Blocked|blocked by CORS policy|Content Security Policy|Refused to (?:load|execute|connect)|Mixed Content:"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "browser-minified-v8-stack", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^(?:Error|TypeError|ReferenceError|SyntaxError|RangeError):"}, {"kind": "regex", "value": "^\\s*at "}, {"kind": "regex", "value": "\\.min\\.js:\\d+:\\d+|webpack://"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "react-browser-error", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "The above error occurred in the <|Minified React error|Hydration failed"}], "any": [{"kind": "regex", "value": "react|React|\\.jsx?:\\d+"}]},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "vue-browser-error", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\[Vue warn\\]:|Unhandled error during execution of component"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "angular-browser-error", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "NG\\d{4}:|NullInjectorError|R3InjectorError|Angular.*Error"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "dotnet-exception", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^(?:Unhandled exception\\. )?System\\.[A-Za-z.]+Exception:"}, {"kind": "regex", "value": "^\\s*at [A-Za-z_][A-Za-z0-9_.+`<>]+"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "msbuild-diagnostic", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "\\.(?:cs|fs|vb|csproj|fsproj|vbproj)(?:\\(\\d+,\\d+\\)|:\\d+:\\d+): (?:error|warning) (?:CS|FS|BC|MSB|NU)\\d+"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "go-panic", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^panic:"}, {"kind": "regex", "value": "^goroutine \\d+ \\["}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "PANIC"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "go-test-failure", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^--- FAIL:|^FAIL\\s+\\S+"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "ERROR"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "kubernetes-events", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^(?:LAST SEEN|FirstSeen\\s+LastSeen).*(?:TYPE|Type).*(?:REASON|Reason)|Warning\\s+(?:FailedScheduling|BackOff|FailedMount|Unhealthy)"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "WARNING"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "kubernetes-prefixed-pod-log", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\[pod/[^/]+/container/[^]]+\\]"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\[pod/[^/]+/container/[^]]+\\]", "severity_capture": "", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "nginx-error", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2} \\[(?:alert|crit|error|warn|notice|info)\\]"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2} \\[(?P<level>alert|crit|error|warn|notice|info)\\]", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "nginx-access", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\S+ \\S+ \\S+ \\[[^]]+\\] .(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) \\S+ HTTP/"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\S+ \\S+ \\S+ \\[[^]]+\\] ", "severity_capture": "", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "mysql-error-log", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d{4}-\\d{2}-\\d{2}T.*Z\\s+\\d+ \\[(?:ERROR|Warning|Note)\\] \\[MY-\\d+\\]"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d{4}-\\d{2}-\\d{2}T.*Z\\s+\\d+ \\[(?P<level>ERROR|Warning|Note)\\]", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "redis-log", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d+:[MSC] \\d{2} [A-Z][a-z]{2} \\d{4} \\d{2}:\\d{2}:\\d{2}\\.\\d{3} [#*.-]"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d+:[MSC] \\d{2} [A-Z][a-z]{2} \\d{4} \\d{2}:\\d{2}:\\d{2}\\.\\d{3} ", "severity_capture": "", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "mongodb-json-log", "record_kind": "json",
+      "detect": {"all": [{"kind": "path_exists", "value": "$.t"}, {"kind": "path_exists", "value": "$.s"}, {"kind": "path_exists", "value": "$.msg"}], "any": []},
+      "parser": {"kind": "json_fields", "source_suffix": " / MongoDB", "timestamp_paths": ["$.t.$date", "$.t"], "severity_paths": ["$.s"], "default_severity": "UNKNOWN", "status_paths": [], "nonzero_status_is_error": false, "status_from_text": false, "fields": [{"label": "", "paths": ["$.c"]}, {"label": "", "paths": ["$.msg"]}, {"label": "attr", "paths": ["$.attr"]}], "fingerprint_paths": ["$.s", "$.c", "$.id", "$.msg"], "normalize_fingerprint_digits": true},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "systemd-journal-short", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^[A-Z][a-z]{2}\\s+\\d+ \\d{2}:\\d{2}:\\d{2} \\S+ (?:systemd|\\S+\\.service)\\[?"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^[A-Z][a-z]{2}\\s+\\d+ \\d{2}:\\d{2}:\\d{2} ", "severity_capture": "", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "systemd-journal-json", "record_kind": "json",
+      "detect": {"all": [{"kind": "path_exists", "value": "$.__REALTIME_TIMESTAMP"}, {"kind": "path_exists", "value": "$.PRIORITY"}, {"kind": "path_exists", "value": "$.MESSAGE"}], "any": []},
+      "parser": {"kind": "json_fields", "source_suffix": " / journal", "timestamp_paths": ["$.__REALTIME_TIMESTAMP", "$.SYSLOG_TIMESTAMP"], "severity_paths": ["$.PRIORITY"], "default_severity": "UNKNOWN", "status_paths": [], "nonzero_status_is_error": false, "status_from_text": false, "fields": [{"label": "unit", "paths": ["$._SYSTEMD_UNIT", "$.SYSLOG_IDENTIFIER"]}, {"label": "", "paths": ["$.MESSAGE"]}], "fingerprint_paths": ["$.PRIORITY", "$._SYSTEMD_UNIT", "$.SYSLOG_IDENTIFIER", "$.MESSAGE"], "normalize_fingerprint_digits": true},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "native-asan", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^==\\d+==ERROR: (?:AddressSanitizer|LeakSanitizer|ThreadSanitizer):"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "CRITICAL"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "native-gdb-backtrace", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "Program received signal (?:SIGSEGV|SIGABRT|SIGBUS|SIGILL)"}, {"kind": "regex", "value": "^#0\\s+"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "CRITICAL"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "native-crash", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "Segmentation fault \\(core dumped\\)|segfault at .* ip .* error|Aborted \\(core dumped\\)"}], "any": []},
+      "parser": {"kind": "whole_text", "severity": "CRITICAL"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "android-logcat", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+[VDIWEF] "}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+(?P<level>[VDIWEF]) ", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "apache-error-log", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\[[A-Z][a-z]{2} [A-Z][a-z]{2} \\d{2} .*\\] \\[(?:error|warn|notice|info)\\]"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\[[^]]+\\] \\[(?P<level>error|warn|notice|info)\\]", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "bgl-ras", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^- \\d+ \\d{4}\\.\\d{2}\\.\\d{2} .* RAS "}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^(?:- |APPREAD )\\d+ .* RAS \\S+ (?P<level>INFO|WARN|ERROR|FATAL) ", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "hadoop", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d{4}-\\d{2}-\\d{2} .* (?:INFO|WARN|ERROR|FATAL) \\[.*\\] org\\.apache\\.hadoop"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d{4}-\\d{2}-\\d{2} .* (?P<level>INFO|WARN|ERROR|FATAL) \\[", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "hdfs", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d{6} \\d{6} \\d+ (?:INFO|WARN|ERROR|FATAL) dfs\\."}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d{6} \\d{6} \\d+ (?P<level>INFO|WARN|ERROR|FATAL) ", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "healthapp", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d{8}-\\d{2}:\\d{2}:\\d{2}:\\d{3}\\|"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d{8}-\\d{1,2}:\\d{2}:\\d{2}:\\d{3}\\|", "severity_capture": "", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "hpc-failure", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d+ node-\\d+ node .* failure"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d+ \\S+ \\S+ ", "severity_capture": "", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "linux-syslog", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^[A-Z][a-z]{2}\\s+\\d+ \\d{2}:\\d{2}:\\d{2} \\S+ "}], "any": [{"kind": "regex", "value": "sshd\\(pam_unix\\)|kernel:|su\\(pam_unix\\)"}]},
+      "parser": {"kind": "line_blocks", "start_regex": "^[A-Z][a-z]{2}\\s+\\d+ \\d{2}:\\d{2}:\\d{2} ", "severity_capture": "", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "mac-unified-syslog", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^[A-Z][a-z]{2}\\s+\\d+ \\d{2}:\\d{2}:\\d{2} \\S+ "}], "any": [{"kind": "regex", "value": "MacBook|corecaptured\\[|secd\\[|SpotlightNetHelper\\["}]},
+      "parser": {"kind": "line_blocks", "start_regex": "^[A-Z][a-z]{2}\\s+\\d+ \\d{2}:\\d{2}:\\d{2} ", "severity_capture": "", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "openssh-auth", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^[A-Z][a-z]{2}\\s+\\d+ \\d{2}:\\d{2}:\\d{2} \\S+ sshd\\["}], "any": [{"kind": "regex", "value": "Invalid user|Failed password|BREAK-IN ATTEMPT"}]},
+      "parser": {"kind": "line_blocks", "start_regex": "^[A-Z][a-z]{2}\\s+\\d+ \\d{2}:\\d{2}:\\d{2} ", "severity_capture": "", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "openstack", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^nova-(?:api|compute)\\.log.* \\d{4}-\\d{2}-\\d{2} "}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^nova-.*? \\d{4}-\\d{2}-\\d{2} .*? (?P<level>INFO|WARNING|ERROR|CRITICAL) ", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "proxifier", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\[\\d{2}\\.\\d{2} \\d{2}:\\d{2}:\\d{2}\\] .* error :"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\[\\d{2}\\.\\d{2} \\d{2}:\\d{2}:\\d{2}\\] ", "severity_capture": "", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "spark", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d{2}/\\d{2}/\\d{2} .* (?:INFO|WARN|ERROR) (?:spark|executor)\\."}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d{2}/\\d{2}/\\d{2} .* (?P<level>INFO|WARN|ERROR) ", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "thunderbird-ras", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^- \\d+ \\d{4}\\.\\d{2}\\.\\d{2} tbird-"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^- \\d+ \\d{4}\\.\\d{2}\\.\\d{2} ", "severity_capture": "", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "windows-cbs", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}, (?:Info|Warning|Error)\\s+CBS"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}, (?P<level>Info|Warning|Error)\\s+", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "zookeeper", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d{4}-\\d{2}-\\d{2} .* - (?:INFO|WARN|ERROR)\\s+\\[.*Quorum"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d{4}-\\d{2}-\\d{2} .* - (?P<level>INFO|WARN|ERROR)\\s+", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "gcp-http-request",
+      "record_kind": "json",
+      "detect": {
+        "all": [
+          {"kind": "path_exists", "value": "$.insertId"},
+          {"kind": "path_exists", "value": "$.httpRequest"}
+        ],
+        "any": []
+      },
+      "parser": {
+        "kind": "json_fields",
+        "source_suffix": "",
+        "timestamp_paths": ["$.timestamp", "$.receiveTimestamp"],
+        "severity_paths": ["$.severity"],
+        "default_severity": "UNKNOWN",
+        "status_paths": ["$.httpRequest.status"],
+        "nonzero_status_is_error": false,
+        "status_from_text": false,
+        "fields": [
+          {"label": "", "paths": ["$.httpRequest.requestMethod"]},
+          {"label": "", "paths": ["$.httpRequest.requestUrl"]},
+          {"label": "status", "paths": ["$.httpRequest.status"]},
+          {"label": "latency", "paths": ["$.httpRequest.latency"]},
+          {"label": "", "paths": ["$.textPayload", "$.jsonPayload.message"]}
+        ],
+        "fingerprint_paths": [
+          "$.severity", "$.httpRequest.requestMethod", "$.httpRequest.requestUrl",
+          "$.httpRequest.status", "$.textPayload", "$.jsonPayload.message"
+        ],
+        "normalize_fingerprint_digits": false
+      },
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "gcp-proto-payload-audit",
+      "record_kind": "json",
+      "detect": {
+        "all": [
+          {"kind": "path_exists", "value": "$.insertId"},
+          {"kind": "path_exists", "value": "$.protoPayload"}
+        ],
+        "any": []
+      },
+      "parser": {
+        "kind": "json_fields",
+        "source_suffix": " / protoPayload",
+        "timestamp_paths": ["$.timestamp", "$.receiveTimestamp"],
+        "severity_paths": ["$.severity"],
+        "default_severity": "INFO",
+        "status_paths": ["$.protoPayload.status.code"],
+        "nonzero_status_is_error": true,
+        "status_from_text": false,
+        "fields": [
+          {"label": "", "paths": ["$.protoPayload.serviceName"]},
+          {"label": "", "paths": ["$.protoPayload.methodName"]},
+          {"label": "", "paths": ["$.protoPayload.resourceName"]},
+          {"label": "status", "paths": ["$.protoPayload.status.message"]}
+        ],
+        "fingerprint_paths": [
+          "$.severity", "$.protoPayload.serviceName", "$.protoPayload.methodName",
+          "$.protoPayload.resourceName", "$.protoPayload.status.code"
+        ],
+        "normalize_fingerprint_digits": false
+      },
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "gcp-text-payload",
+      "record_kind": "json",
+      "detect": {
+        "all": [
+          {"kind": "path_exists", "value": "$.insertId"},
+          {"kind": "path_exists", "value": "$.textPayload"}
+        ],
+        "any": []
+      },
+      "parser": {
+        "kind": "json_fields",
+        "source_suffix": " / textPayload",
+        "timestamp_paths": ["$.timestamp", "$.receiveTimestamp"],
+        "severity_paths": ["$.severity"],
+        "default_severity": "UNKNOWN",
+        "status_paths": [],
+        "nonzero_status_is_error": false,
+        "status_from_text": true,
+        "fields": [
+          {"label": "", "paths": ["$.textPayload"]}
+        ],
+        "fingerprint_paths": ["$.textPayload"],
+        "normalize_fingerprint_digits": true
+      },
+      "validation": {"require_events": true, "require_content": true}
+    },
+    {
+      "id": "gcp-json-payload",
+      "record_kind": "json",
+      "detect": {
+        "all": [
+          {"kind": "path_exists", "value": "$.insertId"},
+          {"kind": "path_exists", "value": "$.jsonPayload"}
+        ],
+        "any": []
+      },
+      "parser": {
+        "kind": "json_fields",
+        "source_suffix": " / jsonPayload",
+        "timestamp_paths": ["$.timestamp", "$.receiveTimestamp"],
+        "severity_paths": ["$.severity", "$.jsonPayload.severity", "$.jsonPayload.level"],
+        "default_severity": "UNKNOWN",
+        "status_paths": ["$.jsonPayload.status", "$.jsonPayload.statusCode"],
+        "nonzero_status_is_error": false,
+        "status_from_text": false,
+        "fields": [
+          {"label": "", "paths": ["$.jsonPayload.message", "$.jsonPayload.msg", "$.jsonPayload"]}
+        ],
+        "fingerprint_paths": [
+          "$.severity", "$.jsonPayload.code", "$.jsonPayload.message", "$.jsonPayload.msg"
+        ],
+        "normalize_fingerprint_digits": true
+      },
+      "validation": {"require_events": true, "require_content": true}
+    }
+  ]
+}

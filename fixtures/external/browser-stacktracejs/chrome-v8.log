@@ -1,0 +1,6 @@
+Error: message string
+at baz (eval at foo (eval at speak (http://localhost:8080/file.js:21:17)), <anonymous>:1:30)
+at foo (eval at speak (http://localhost:8080/file.js:21:17), <anonymous>:2:96)
+at eval (eval at speak (http://localhost:8080/file.js:21:17), <anonymous>:4:18)
+at Object.speak (http://localhost:8080/file.js:21:17)
+at http://localhost:8080/file.js:31:13

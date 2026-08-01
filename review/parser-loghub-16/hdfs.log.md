@@ -1,0 +1,113 @@
+# hdfs.log
+
+Format: `hdfs` · chars 5160→1491 · events 40 · important 20 · duplicates 31 · batches 1
+
+## Raw
+
+```text
+081109 214043 2561 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_-2918118818249673980 to /<IP>:
+081109 214402 2677 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_8376667364205250596 to /<IP>:
+081109 214529 2747 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_3763728533434719668 to /<IP>:
+081109 214910 2848 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_6241141267506413726 to /<IP>:
+081109 215136 2868 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_8466246428293623262 to /<IP>:
+081109 215259 2934 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_-3140754468249228022 to /<IP>:
+081109 215702 3022 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_3441699978641526775 to /<IP>:
+081109 220032 3137 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_-305633040016166849 to /<IP>:
+081109 220403 3148 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_-6290631608800952376 to /<IP>:
+081109 221105 3338 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_-4841792440390267307 to /<IP>:
+081109 221151 3361 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_5126469776250053435 to /<IP>:
+081109 222040 3463 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_-2032740670708110312 to /<IP>:
+081109 222041 3390 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_-62891505109755100 to /<IP>:
+081109 222342 3462 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_2244903517044280975 to /<IP>:
+081109 222650 3459 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_5905933788014151041 to /<IP>:
+081109 223910 3540 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_2969087638814291714 to /<IP>:
+081109 224054 3560 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_2879780987351022871 to /<IP>:
+081109 224234 3638 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_4934527196392001803 to /<IP>:
+081109 224420 3666 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_7517964792804498202 to /<IP>:
+081109 224741 3699 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_7940316270494947483 to /<IP>:
+081109 203615 148 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_38865049064139660 terminating
+081109 203807 222 INFO dfs.DataNode$PacketResponder: PacketResponder 0 for block blk_-6952295868487656571 terminating
+081109 204005 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: <IP>:50010 is added to blk_7128370237687728475 size 67108864
+081109 204015 308 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_8229193803249955061 terminating
+081109 204106 329 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_-6670958622368987959 terminating
+081109 204132 26 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: <IP>:50010 is added to blk_3050920587428079149 size 67108864
+081109 204324 34 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: <IP>:50010 is added to blk_7888946331804732825 size 67108864
+081109 204453 34 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: <IP>:50010 is added to blk_2377150260128098806 size 67108864
+081109 204525 512 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_572492839287299681 terminating
+081109 204655 556 INFO dfs.DataNode$PacketResponder: Received block blk_3587508140051953248 of size 67108864 from /<IP>
+081109 204722 567 INFO dfs.DataNode$PacketResponder: Received block blk_5402003568334525940 of size 67108864 from /<IP>
+081109 204815 653 INFO dfs.DataNode$DataXceiver: Receiving block blk_5792489080791696128 src: /<IP>:33145 dest: /<IP>:50010
+081109 204842 663 INFO dfs.DataNode$DataXceiver: Receiving block blk_1724757848743533110 src: /<IP>:49851 dest: /<IP>:50010
+081109 204908 31 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: <IP>:50010 is added to blk_8015913224713045110 size 67108864
+081109 204925 673 INFO dfs.DataNode$DataXceiver: Receiving block blk_-5623176793330377570 src: /<IP>:53725 dest: /<IP>:50010
+081109 205035 28 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand/_temporary/_task_200811092030_0001_m_000590_0/part-00590. blk_-1727475099218615100
+081109 205056 710 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_5017373558217225674 terminating
+081109 205157 752 INFO dfs.DataNode$PacketResponder: Received block blk_9212264480425680329 of size 67108864 from /<IP>
+081109 205315 29 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand/_temporary/_task_200811092030_0001_m_000742_0/part-00742. blk_-7878121102358435702
+081109 205409 28 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: <IP>:50010 is added to blk_4568434182693165548 size 67108864
+
+```
+
+## Parsed
+
+```text
+[line 1 · WARNING · repeated 7 times]
+081109 214043 2561 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_-2918118818249673980 to /<IP>:
+
+[line 2 · WARNING · repeated 13 times]
+081109 214402 2677 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_8376667364205250596 to /<IP>:
+
+[line 21 · INFO · repeated 4 times]
+081109 203615 148 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_38865049064139660 terminating
+
+[line 22 · INFO · repeated 2 times]
+081109 203807 222 INFO dfs.DataNode$PacketResponder: PacketResponder 0 for block blk_-6952295868487656571 terminating
+
+[line 23 · INFO · repeated 6 times]
+081109 204005 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: <IP>:50010 is added to blk_7128370237687728475 size 67108864
+
+[line 30 · INFO · repeated 3 times]
+081109 204655 556 INFO dfs.DataNode$PacketResponder: Received block blk_3587508140051953248 of size 67108864 from /<IP>
+
+[line 32 · INFO · repeated 2 times]
+081109 204815 653 INFO dfs.DataNode$DataXceiver: Receiving block blk_5792489080791696128 src: /<IP>:33145 dest: /<IP>:50010
+
+[line 35 · INFO]
+081109 204925 673 INFO dfs.DataNode$DataXceiver: Receiving block blk_-5623176793330377570 src: /<IP>:53725 dest: /<IP>:50010
+
+[line 36 · INFO · repeated 2 times]
+081109 205035 28 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand/_temporary/_task_200811092030_0001_m_000590_0/part-00590. blk_-1727475099218615100
+```
+
+## Sent batches
+
+### Batch 1
+
+```text
+[line 1 · WARNING · repeated 7 times]
+081109 214043 2561 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_-2918118818249673980 to /<IP>:
+
+[line 2 · WARNING · repeated 13 times]
+081109 214402 2677 WARN dfs.DataNode$DataXceiver: <IP>:50010:Got exception while serving blk_8376667364205250596 to /<IP>:
+
+[line 21 · INFO · repeated 4 times]
+081109 203615 148 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_38865049064139660 terminating
+
+[line 22 · INFO · repeated 2 times]
+081109 203807 222 INFO dfs.DataNode$PacketResponder: PacketResponder 0 for block blk_-6952295868487656571 terminating
+
+[line 23 · INFO · repeated 6 times]
+081109 204005 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: <IP>:50010 is added to blk_7128370237687728475 size 67108864
+
+[line 30 · INFO · repeated 3 times]
+081109 204655 556 INFO dfs.DataNode$PacketResponder: Received block blk_3587508140051953248 of size 67108864 from /<IP>
+
+[line 32 · INFO · repeated 2 times]
+081109 204815 653 INFO dfs.DataNode$DataXceiver: Receiving block blk_5792489080791696128 src: /<IP>:33145 dest: /<IP>:50010
+
+[line 35 · INFO]
+081109 204925 673 INFO dfs.DataNode$DataXceiver: Receiving block blk_-5623176793330377570 src: /<IP>:53725 dest: /<IP>:50010
+
+[line 36 · INFO · repeated 2 times]
+081109 205035 28 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand/_temporary/_task_200811092030_0001_m_000590_0/part-00590. blk_-1727475099218615100
+```

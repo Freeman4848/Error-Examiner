@@ -4,6 +4,7 @@ use crate::*;
 pub(crate) enum PreviewMode {
     Raw,
     Parsed,
+    Sent,
     Compare,
 }
 
@@ -22,6 +23,7 @@ impl ErrorExplainerApp {
             self.preview_open = false;
             return;
         };
+        let sent_preview = log.batches.join("\n\n--- next batch ---\n\n");
         let mut builder = egui::ViewportBuilder::default()
             .with_title(format!("Log preview · {}", log.name))
             .with_inner_size([1100.0, 760.0])
@@ -46,6 +48,7 @@ impl ErrorExplainerApp {
                     ui.horizontal(|ui| {
                         ui.selectable_value(mode, PreviewMode::Raw, "Raw");
                         ui.selectable_value(mode, PreviewMode::Parsed, "Parsed");
+                        ui.selectable_value(mode, PreviewMode::Sent, "Sent");
                         ui.selectable_value(mode, PreviewMode::Compare, "Compare");
                         ui.separator();
                         if *mode == PreviewMode::Compare
@@ -65,6 +68,9 @@ impl ErrorExplainerApp {
                         if ui.button("Copy Parsed").clicked() {
                             ui.output_mut(|output| output.copied_text = log.parsed_preview.clone());
                         }
+                        if ui.button("Copy Sent").clicked() {
+                            ui.output_mut(|output| output.copied_text = sent_preview.clone());
+                        }
                         ui.separator();
                         ui.label(format!(
                             "{} -> {} chars · ~{} standard tokens",
@@ -82,6 +88,16 @@ impl ErrorExplainerApp {
                             "parsed",
                             "Prepared log",
                             &log.parsed_preview,
+                            true,
+                            accent,
+                        );
+                    }
+                    PreviewMode::Sent => {
+                        preview_text(
+                            ui,
+                            "sent",
+                            &format!("Sent log payload · {}", log.selected_variant),
+                            &sent_preview,
                             true,
                             accent,
                         );

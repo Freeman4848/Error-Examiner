@@ -9,7 +9,10 @@ mod hotkey;
 mod linux_hotkey;
 #[cfg(target_os = "linux")]
 mod linux_tray;
-mod parser_catalog;
+mod parser_schema;
+#[cfg(test)]
+mod parser_schema_tests;
+mod parser_text;
 mod preprocess;
 mod preprocess_raw;
 mod storage;
@@ -23,7 +26,7 @@ mod ui_tabs;
 mod windows_tray;
 mod workflow;
 
-use ai::{AiAnswer, AiRequest, ChatMessage, ProviderKind, ProviderSettings};
+use ai::{AiAnswer, AiRequest, ApiProtocol, ChatMessage, ProviderKind, ProviderSettings};
 use command::UiCommand;
 use eframe::egui::{self, Color32, Key, RichText, ScrollArea, TextEdit};
 use global_hotkey::GlobalHotKeyManager;

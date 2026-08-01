@@ -1,0 +1,7 @@
+Error: message string
+baz
+foo
+eval code
+eval@[native code]
+speak@http://localhost:8080/file.js:26:21
+global code@http://localhost:8080/file.js:33:18

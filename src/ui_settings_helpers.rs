@@ -1,5 +1,28 @@
 use crate::*;
 
+pub(crate) fn custom_protocol_picker(app: &mut ErrorExplainerApp, ui: &mut egui::Ui) {
+    if app.settings.provider != ProviderKind::CustomApi {
+        return;
+    }
+    let old_protocol = app.settings.custom_protocol;
+    egui::ComboBox::from_label("API protocol")
+        .selected_text(app.settings.custom_protocol.label())
+        .show_ui(ui, |ui| {
+            for protocol in ApiProtocol::ALL {
+                ui.selectable_value(
+                    &mut app.settings.custom_protocol,
+                    protocol,
+                    protocol.label(),
+                );
+            }
+        });
+    if app.settings.custom_protocol != old_protocol {
+        app.available_models.clear();
+        app.settings.model.clear();
+    }
+    ui.label("Enter the provider's API root URL and exact model ID.");
+}
+
 pub(crate) fn model_picker(
     app: &mut ErrorExplainerApp,
     ui: &mut egui::Ui,

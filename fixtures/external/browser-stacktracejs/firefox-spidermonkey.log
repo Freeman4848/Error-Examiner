@@ -1,0 +1,6 @@
+Error: message string
+baz@http://localhost:8080/file.js line 26 > eval line 2 > eval:1:30
+foo@http://localhost:8080/file.js line 26 > eval:2:96
+@http://localhost:8080/file.js line 26 > eval:4:18
+speak@http://localhost:8080/file.js:26:17
+@http://localhost:8080/file.js:33:9

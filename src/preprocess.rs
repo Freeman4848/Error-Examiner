@@ -1,4 +1,4 @@
-use serde_json::Value;
+use crate::parser_schema::{LogEvent, ParseOutcome, Severity};
 use std::collections::HashMap;
 
 #[derive(Clone)]
@@ -11,49 +11,23 @@ pub(crate) struct PreparedLog {
     pub(crate) important_events: usize,
     pub(crate) duplicate_count: usize,
     pub(crate) estimated_tokens: usize,
+    pub(crate) selected_variant: String,
     pub(crate) batches: Vec<String>,
     pub(crate) raw_preview: String,
     pub(crate) parsed_preview: String,
     pub(crate) normalized: bool,
 }
 
-#[derive(Clone)]
-struct LogEvent {
-    source: String,
-    severity: Severity,
-    content: String,
-    fingerprint: String,
-    repeats: usize,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Severity {
-    Critical,
-    Error,
-    Warning,
-    Info,
-    Unknown,
-}
-
-impl Severity {
-    fn label(self) -> &'static str {
-        match self {
-            Self::Critical => "CRITICAL",
-            Self::Error => "ERROR",
-            Self::Warning => "WARNING",
-            Self::Info => "INFO",
-            Self::Unknown => "UNKNOWN",
-        }
-    }
-}
-
 pub(crate) fn prepare(name: String, input: &str, batch_chars: usize) -> PreparedLog {
     let clean = normalize_newlines(input);
-    let detection = crate::parser_catalog::detect(&clean);
-    if !detection.supported {
-        return prepare_fallback(name, input, batch_chars, detection.format_ids);
+    let ParseOutcome {
+        format_ids,
+        events,
+        supported,
+    } = crate::parser_schema::parse(&clean);
+    if !supported {
+        return prepare_fallback(name, input, batch_chars, format_ids);
     }
-    let events = parse_json(&clean).unwrap_or_else(|| parse_text(&clean));
     let event_count = events.len();
     let important_events = events
         .iter()
@@ -66,16 +40,27 @@ pub(crate) fn prepare(name: String, input: &str, batch_chars: usize) -> Prepared
         .count();
     let (events, duplicate_count) = deduplicate(events);
     let normalized = render_events(&events);
-    let batches = make_batches(&events, batch_chars.max(3_000));
+    let use_raw = clean.chars().count() < normalized.chars().count();
+    let selected_chars = if use_raw {
+        clean.chars().count()
+    } else {
+        normalized.chars().count()
+    };
+    let batches = if use_raw {
+        crate::preprocess_raw::batches(&clean, batch_chars.max(3_000))
+    } else {
+        make_batches(&events, batch_chars.max(3_000))
+    };
     PreparedLog {
         name,
-        detected_format: detection.format_ids.join(" + "),
+        detected_format: format_ids.join(" + "),
         original_chars: input.chars().count(),
         normalized_chars: normalized.chars().count(),
         event_count,
         important_events,
         duplicate_count,
-        estimated_tokens: normalized.chars().count().div_ceil(3),
+        estimated_tokens: selected_chars.div_ceil(3),
+        selected_variant: if use_raw { "Raw" } else { "Parsed" }.to_owned(),
         batches,
         raw_preview: input.to_owned(),
         parsed_preview: normalized,
@@ -95,9 +80,12 @@ pub(crate) fn prepare_raw(
         ));
     }
     let clean = normalize_newlines(&input);
-    let events = parse_json(&clean).unwrap_or_else(|| parse_text(&clean));
-    let (events, _) = deduplicate(events);
-    let parsed_preview = render_events(&events);
+    let parsed = crate::parser_schema::parse(&clean);
+    let parsed_preview = if parsed.supported {
+        render_events(&deduplicate(parsed.events).0)
+    } else {
+        input.clone()
+    };
     Ok(PreparedLog {
         name,
         detected_format: "raw (preparation disabled)".to_owned(),
@@ -107,6 +95,7 @@ pub(crate) fn prepare_raw(
         important_events: 0,
         duplicate_count: 0,
         estimated_tokens: size.div_ceil(3),
+        selected_variant: "Raw".to_owned(),
         batches: vec![input.clone()],
         raw_preview: input,
         parsed_preview,
@@ -134,6 +123,7 @@ fn prepare_fallback(
         important_events: 0,
         duplicate_count: 0,
         estimated_tokens: size.div_ceil(3),
+        selected_variant: "Raw".to_owned(),
         batches: crate::preprocess_raw::batches(input, batch_chars.max(3_000)),
         raw_preview: input.to_owned(),
         parsed_preview: input.to_owned(),
@@ -163,225 +153,6 @@ fn redact_line(line: &str) -> String {
                 .find(char::is_whitespace)
                 .map_or(result.len(), |offset| value_start + offset);
             result.replace_range(value_start..value_end, "[REDACTED]");
-        }
-    }
-    result
-}
-
-fn parse_json(input: &str) -> Option<Vec<LogEvent>> {
-    let values = serde_json::from_str::<Value>(input)
-        .ok()?
-        .as_array()?
-        .clone();
-    Some(
-        values
-            .iter()
-            .enumerate()
-            .map(|(index, value)| json_event(index + 1, value))
-            .collect(),
-    )
-}
-
-fn json_event(index: usize, value: &Value) -> LogEvent {
-    if value["httpRequest"].is_object() {
-        return json_http_event(index, value);
-    }
-    if value["protoPayload"].is_object() {
-        return json_audit_event(index, value);
-    }
-    if let Some(payload) = value["textPayload"].as_str() {
-        return json_text_event(index, value, payload);
-    }
-    json_payload_event(index, value)
-}
-
-fn json_http_event(index: usize, value: &Value) -> LogEvent {
-    let severity_text = value["severity"].as_str().unwrap_or("UNKNOWN");
-    let status = value["httpRequest"]["status"].as_u64();
-    let severity = severity_from(severity_text, status);
-    let timestamp = value["timestamp"].as_str().unwrap_or("no timestamp");
-    let request = &value["httpRequest"];
-    let method = request["requestMethod"].as_str().unwrap_or("");
-    let url = request["requestUrl"].as_str().unwrap_or("");
-    let latency = request["latency"].as_str().unwrap_or("");
-    let payload = value["textPayload"]
-        .as_str()
-        .or_else(|| value["jsonPayload"]["message"].as_str())
-        .unwrap_or("");
-    let content = format!(
-        "{timestamp} {severity_text} {method} {url} status={} latency={latency} {payload}",
-        status.map_or_else(|| "-".to_owned(), |value| value.to_string())
-    )
-    .trim()
-    .to_owned();
-    let fingerprint = format!(
-        "{severity_text}|{method}|{url}|{}|{payload}",
-        status.unwrap_or(0)
-    );
-    LogEvent {
-        source: format!("JSON item {index}"),
-        severity,
-        content,
-        fingerprint,
-        repeats: 1,
-    }
-}
-
-fn json_audit_event(index: usize, value: &Value) -> LogEvent {
-    let payload = &value["protoPayload"];
-    let severity_text = value["severity"].as_str().unwrap_or("INFO");
-    let status = payload["status"]["code"].as_u64();
-    let severity = if status.is_some_and(|code| code != 0) {
-        Severity::Error
-    } else {
-        severity_from(severity_text, None)
-    };
-    let timestamp = value["timestamp"].as_str().unwrap_or("no timestamp");
-    let service = payload["serviceName"].as_str().unwrap_or("");
-    let method = payload["methodName"].as_str().unwrap_or("");
-    let resource = payload["resourceName"].as_str().unwrap_or("");
-    let content = format!("{timestamp} {severity_text} {service} {method} {resource}")
-        .trim()
-        .to_owned();
-    LogEvent {
-        source: format!("JSON item {index} / protoPayload"),
-        severity,
-        fingerprint: format!("{severity_text}|{service}|{method}|{resource}"),
-        content,
-        repeats: 1,
-    }
-}
-
-fn json_text_event(index: usize, value: &Value, payload: &str) -> LogEvent {
-    let status = payload
-        .split_whitespace()
-        .filter_map(|token| token.parse::<u64>().ok())
-        .find(|status| (100..=599).contains(status));
-    let inferred = text_event(index, index, payload.to_owned()).severity;
-    let severity = match severity_from(value["severity"].as_str().unwrap_or(""), status) {
-        Severity::Unknown => inferred,
-        known => known,
-    };
-    let timestamp = value["timestamp"].as_str().unwrap_or("no timestamp");
-    let has_level_prefix = [
-        "TRACE", "DEBUG", "INFO", "WARN", "WARNING", "ERROR", "FATAL",
-    ]
-    .iter()
-    .any(|level| payload.trim_start().starts_with(level));
-    let content = if has_level_prefix {
-        format!("{timestamp} {payload}")
-    } else {
-        format!("{timestamp} {} {payload}", severity.label())
-    };
-    LogEvent {
-        source: format!("JSON item {index} / textPayload"),
-        severity,
-        fingerprint: fingerprint(payload),
-        content,
-        repeats: 1,
-    }
-}
-
-fn json_payload_event(index: usize, value: &Value) -> LogEvent {
-    let payload = &value["jsonPayload"];
-    let text = payload["message"]
-        .as_str()
-        .map(str::to_owned)
-        .unwrap_or_else(|| payload.to_string());
-    let severity_text = value["severity"].as_str().unwrap_or("UNKNOWN");
-    let severity = severity_from(severity_text, None);
-    let timestamp = value["timestamp"].as_str().unwrap_or("no timestamp");
-    LogEvent {
-        source: format!("JSON item {index} / jsonPayload"),
-        severity,
-        fingerprint: fingerprint(&text),
-        content: format!("{timestamp} {severity_text} {text}"),
-        repeats: 1,
-    }
-}
-
-fn parse_text(input: &str) -> Vec<LogEvent> {
-    let lines: Vec<&str> = input.lines().collect();
-    if lines.iter().any(|line| line.starts_with("error[E")) {
-        return parse_rust_diagnostics(&lines);
-    }
-    lines
-        .iter()
-        .enumerate()
-        .filter(|(_, line)| !line.trim().is_empty())
-        .map(|(index, line)| text_event(index + 1, index + 1, line.to_string()))
-        .collect()
-}
-
-fn parse_rust_diagnostics(lines: &[&str]) -> Vec<LogEvent> {
-    let mut ranges = Vec::new();
-    let mut start = 0;
-    for (index, line) in lines.iter().enumerate() {
-        if line.starts_with("error[E") && index > start {
-            ranges.push((start, index));
-            start = index;
-        }
-    }
-    ranges.push((start, lines.len()));
-    ranges
-        .into_iter()
-        .filter(|(start, end)| start < end)
-        .map(|(start, end)| text_event(start + 1, end, lines[start..end].join("\n")))
-        .collect()
-}
-
-fn text_event(start: usize, end: usize, content: String) -> LogEvent {
-    let lower = content.to_ascii_lowercase();
-    let severity = if lower.contains("fatal") || lower.contains("panic") {
-        Severity::Critical
-    } else if lower.contains("error") || lower.contains("failed") {
-        Severity::Error
-    } else if lower.contains("warning") || lower.contains("warn") {
-        Severity::Warning
-    } else if lower.contains("info") || lower.contains("checking ") {
-        Severity::Info
-    } else {
-        Severity::Unknown
-    };
-    LogEvent {
-        source: if start == end {
-            format!("line {start}")
-        } else {
-            format!("lines {start}-{end}")
-        },
-        severity,
-        fingerprint: fingerprint(&content),
-        content,
-        repeats: 1,
-    }
-}
-
-fn severity_from(text: &str, status: Option<u64>) -> Severity {
-    if status.is_some_and(|value| value >= 500) || text.eq_ignore_ascii_case("CRITICAL") {
-        Severity::Critical
-    } else if status.is_some_and(|value| value >= 400) || text.eq_ignore_ascii_case("ERROR") {
-        Severity::Error
-    } else if text.eq_ignore_ascii_case("WARNING") || text.eq_ignore_ascii_case("WARN") {
-        Severity::Warning
-    } else if status.is_some() || text.eq_ignore_ascii_case("INFO") {
-        Severity::Info
-    } else {
-        Severity::Unknown
-    }
-}
-
-fn fingerprint(text: &str) -> String {
-    let mut result = String::with_capacity(text.len());
-    let mut in_digits = false;
-    for character in text.chars() {
-        if character.is_ascii_digit() {
-            if !in_digits {
-                result.push('#');
-            }
-            in_digits = true;
-        } else {
-            in_digits = false;
-            result.push(character.to_ascii_lowercase());
         }
     }
     result
@@ -452,7 +223,8 @@ mod tests {
 
     #[test]
     fn keeps_rust_diagnostic_whole() {
-        let log = "Checking x\nerror[E1]: bad\n --> x:1\nhelp: fix\nerror[E2]: worse\n --> x:2";
+        let log =
+            "Checking x\nerror[E0001]: bad\n --> x:1:1\nhelp: fix\nerror[E0002]: worse\n --> x:2:1";
         let result = prepare("rust".into(), log, 3_000);
         assert_eq!(result.event_count, 3);
         assert!(result.parsed_preview.contains("help: fix"));
@@ -460,7 +232,7 @@ mod tests {
 
     #[test]
     fn deduplicates_json_requests() {
-        let log = r#"[{"severity":"INFO","httpRequest":{"requestUrl":"/health","status":200}},{"severity":"INFO","httpRequest":{"requestUrl":"/health","status":200}}]"#;
+        let log = r#"[{"insertId":"1","severity":"INFO","httpRequest":{"requestUrl":"/health","status":200}},{"insertId":"2","severity":"INFO","httpRequest":{"requestUrl":"/health","status":200}}]"#;
         let result = prepare("json".into(), log, 3_000);
         assert_eq!(result.duplicate_count, 1);
         assert!(result.parsed_preview.contains("repeated 2 times"));
@@ -469,14 +241,22 @@ mod tests {
     #[test]
     fn classifies_cloud_logging_payload_variants() {
         let log = r#"[
-          {"timestamp":"t1","severity":"INFO","httpRequest":{"requestMethod":"GET","requestUrl":"/health","status":200}},
-          {"timestamp":"t2","severity":"INFO","protoPayload":{"serviceName":"firestore.googleapis.com","methodName":"RunQuery","resourceName":"db"}},
-          {"timestamp":"t3","textPayload":"127.0.0.1 - \"GET / HTTP/1.1\" 200 OK"}
+          {"insertId":"1","timestamp":"t1","severity":"INFO","httpRequest":{"requestMethod":"GET","requestUrl":"/health","status":200}},
+          {"insertId":"2","timestamp":"t2","severity":"INFO","protoPayload":{"serviceName":"firestore.googleapis.com","methodName":"RunQuery","resourceName":"db"}},
+          {"insertId":"3","timestamp":"t3","textPayload":"127.0.0.1 - \"GET / HTTP/1.1\" 200 OK"}
         ]"#;
         let result = prepare("cloud.json".into(), log, 3_000);
         assert_eq!(result.important_events, 0);
         assert!(!result.parsed_preview.contains("UNKNOWN"));
         assert!(result.parsed_preview.contains("protoPayload"));
         assert!(result.parsed_preview.contains("textPayload"));
+    }
+
+    #[test]
+    fn sends_raw_when_parsed_is_larger() {
+        let log = "fatal: not a git repository (or any parent): .git";
+        let result = prepare("git.log".into(), log, 3_000);
+        assert_eq!(result.selected_variant, "Raw");
+        assert_eq!(result.batches, [log]);
     }
 }

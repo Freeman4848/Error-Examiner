@@ -1,0 +1,10 @@
+#1 [internal] load build definition from Dockerfile
+#1 DONE 0.0s
+#8 [stage-1 4/4] COPY --from=builder /app/dist /srv/dist
+#8 ERROR: failed to calculate checksum of ref: /app/dist: not found
+------
+Dockerfile:12
+--------------------
+ 12 | >>> COPY --from=builder /app/dist /srv/dist
+--------------------
+ERROR: failed to solve: failed to compute cache key: /app/dist: not found
