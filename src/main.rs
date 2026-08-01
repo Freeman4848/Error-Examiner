@@ -21,6 +21,7 @@ mod theme;
 mod ui;
 mod ui_chrome;
 mod ui_preview;
+mod ui_schema_lab;
 mod ui_settings_helpers;
 mod ui_tabs;
 #[cfg(target_os = "windows")]
@@ -46,13 +47,6 @@ const APP_NAME: &str = "Error Explainer";
 const HOTKEY_LABEL: &str = "Ctrl+Shift+Alt+C";
 
 fn main() -> eframe::Result<()> {
-    let registry = parser_registry::reload_user_schemas();
-    let coverage = parser_registry::coverage();
-    debug_assert!(registry.built_in > 0);
-    debug_assert_eq!(
-        coverage.covered + coverage.partial + coverage.raw,
-        coverage.total
-    );
     let startup_command = command_from_args();
     let command_server = match command::start_server() {
         Ok(server) => server,
@@ -122,6 +116,7 @@ struct ChatHistory {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Page {
     Chat,
+    SchemaLab,
     Settings,
     AboutHelp,
 }
@@ -155,6 +150,8 @@ struct ErrorExplainerApp {
     messages: Vec<ChatMessage>,
     chat_tabs: Vec<chats::ChatTab>,
     active_chat: usize,
+    schema_registry: parser_registry::RegistryStatus,
+    schema_coverage: parser_registry::Coverage,
     settings: ProviderSettings,
     api_key: String,
     status: String,
@@ -212,6 +209,8 @@ impl ErrorExplainerApp {
         let (model_sender, model_receiver) = mpsc::channel();
         let (hotkey_manager, hotkey_receiver) = hotkey::register(&creation_context.egui_ctx);
         let app_icon_texture = load_app_texture(&creation_context.egui_ctx);
+        let schema_registry = parser_registry::reload_user_schemas();
+        let schema_coverage = parser_registry::coverage();
         command_server.set_context(&creation_context.egui_ctx);
 
         #[cfg(target_os = "windows")]
@@ -239,6 +238,8 @@ impl ErrorExplainerApp {
             messages: active_tab.messages,
             chat_tabs: workspace.tabs,
             active_chat: workspace.active,
+            schema_registry,
+            schema_coverage,
             settings,
             api_key: String::new(),
             status: format!("Ready · {HOTKEY_LABEL}"),
@@ -395,6 +396,7 @@ impl eframe::App for ErrorExplainerApp {
         self.top_bar(context);
         match self.page {
             Page::Chat => self.chat_ui(context),
+            Page::SchemaLab => self.schema_lab_ui(context),
             Page::Settings => self.settings_ui(context),
             Page::AboutHelp => self.about_help_ui(context),
         }
