@@ -58,9 +58,9 @@ pub(crate) fn parse(input: &str) -> ParseOutcome {
 pub(crate) fn parse_with_schema(input: &str, schema: &Schema) -> ParseOutcome {
     let trimmed = input.trim();
     if let Some(records) = json_records(trimmed) {
-        return parse_json_records(&schema, &records);
+        return parse_json_records(schema, &records);
     }
-    let Some(format) = best_format(&schema, "text", None, trimmed) else {
+    let Some(format) = best_format(schema, "text", None, trimmed) else {
         return fallback(Vec::new());
     };
     let events = parse_text(format, trimmed);

@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+#[path = "../src/parser_registry.rs"]
+mod parser_registry;
 #[path = "../src/parser_schema.rs"]
 mod parser_schema;
 #[path = "../src/parser_text.rs"]
@@ -8,6 +10,8 @@ mod parser_text;
 mod preprocess;
 #[path = "../src/preprocess_raw.rs"]
 mod preprocess_raw;
+#[path = "../src/storage.rs"]
+mod storage;
 
 use std::{fs, path::PathBuf};
 

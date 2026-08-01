@@ -22,6 +22,25 @@
       "validation": {"require_events": true, "require_content": true}
     },
     {
+      "id": "rustc-clippy-short-diagnostic",
+      "record_kind": "text",
+      "detect": {
+        "all": [
+          {"kind": "regex", "value": "^(?:[^:\\n]+/)*[^:\\n]+\\.rs:\\d+:\\d+: (?:error|warning)(?:\\[E\\d{4}\\])?:"},
+          {"kind": "regex", "value": "(?:error\\[E\\d{4}\\]|warning:|error:)"}
+        ],
+        "any": []
+      },
+      "parser": {
+        "kind": "line_blocks",
+        "start_regex": "^(?:[^:\\n]+/)*[^:\\n]+\\.rs:\\d+:\\d+: (?P<level>error|warning)(?:\\[E\\d{4}\\])?:",
+        "severity_capture": "level",
+        "default_severity": "ERROR"
+      },
+      "validation": {"require_events": true, "require_content": true},
+      "application": "rustc and Clippy short diagnostics"
+    },
+    {
       "id": "docker-cli-error", "record_kind": "text",
       "detect": {"all": [{"kind": "regex", "value": "^\\[\\]\\nerror: no such object:"}], "any": []},
       "parser": {"kind": "whole_text", "severity": "ERROR"},

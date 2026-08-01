@@ -15,8 +15,9 @@ pub fn list_models(settings: ProviderSettings, api_key: String) -> Result<Vec<St
     models::list(&settings, &api_key)
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ProviderKind {
+    #[default]
     Mock,
     OpenAi,
     OpenAiCompatible,
@@ -25,12 +26,6 @@ pub enum ProviderKind {
     Gemini,
     Anthropic,
     CustomApi,
-}
-
-impl Default for ProviderKind {
-    fn default() -> Self {
-        Self::Mock
-    }
 }
 
 impl ProviderKind {
@@ -75,6 +70,7 @@ impl ProviderKind {
     }
 }
 
+#[allow(clippy::enum_variant_names)] // Stable serialized protocol names in saved settings.
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ApiProtocol {
     #[default]
@@ -423,8 +419,10 @@ mod tests {
 
     #[test]
     fn lm_studio_allows_local_http_without_a_key() {
-        let mut settings = ProviderSettings::default();
-        settings.provider = ProviderKind::LmStudio;
+        let mut settings = ProviderSettings {
+            provider: ProviderKind::LmStudio,
+            ..ProviderSettings::default()
+        };
         settings.apply_provider_defaults();
         settings.model = "loaded-model".into();
         assert!(validate(&settings, "").is_ok());
