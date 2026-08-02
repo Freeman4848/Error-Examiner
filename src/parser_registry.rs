@@ -101,6 +101,14 @@ pub(crate) struct RegistryStatus {
     pub(crate) built_in: usize,
     pub(crate) user: usize,
     pub(crate) rejected: Vec<String>,
+    pub(crate) profiles: Vec<ProfileSummary>,
+}
+
+#[derive(Debug, Default, Clone)]
+pub(crate) struct ProfileSummary {
+    pub(crate) id: String,
+    pub(crate) application: String,
+    pub(crate) origin: String,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -184,6 +192,38 @@ pub(crate) fn install_draft(text: &str) -> Result<PathBuf, String> {
     Ok(path)
 }
 
+pub(crate) fn save_draft(text: &str) -> Result<PathBuf, String> {
+    let schema: Schema = serde_json::from_str(text).map_err(|error| error.to_string())?;
+    validate_schema(&schema)?;
+    let id = schema
+        .formats
+        .first()
+        .ok_or("schema contains no formats")?
+        .id
+        .clone();
+    let dir = crate::storage::app_dir().join("schema-drafts");
+    fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
+    let path = dir.join(format!("{id}.json"));
+    fs::write(&path, text).map_err(|error| error.to_string())?;
+    Ok(path)
+}
+
+pub(crate) fn profile_json(id: &str) -> Result<String, String> {
+    let registry = schema();
+    let format = registry
+        .formats
+        .iter()
+        .find(|format| format.id == id)
+        .cloned()
+        .ok_or_else(|| format!("profile not found: {id}"))?;
+    serde_json::to_string_pretty(&Schema {
+        schema_version: 3,
+        fallback: "raw".into(),
+        formats: vec![format],
+    })
+    .map_err(|error| error.to_string())
+}
+
 fn registry() -> &'static RwLock<Schema> {
     static REGISTRY: OnceLock<RwLock<Schema>> = OnceLock::new();
     REGISTRY.get_or_init(|| RwLock::new(built_in()))
@@ -202,6 +242,11 @@ fn reload_from_dir(dir: &Path) -> RegistryStatus {
     let mut ids: HashSet<String> = merged.formats.iter().map(|item| item.id.clone()).collect();
     let mut status = RegistryStatus {
         built_in: merged.formats.len(),
+        profiles: merged
+            .formats
+            .iter()
+            .map(|format| profile_summary(format, "built-in"))
+            .collect(),
         ..Default::default()
     };
     let Ok(entries) = fs::read_dir(dir) else {
@@ -217,6 +262,12 @@ fn reload_from_dir(dir: &Path) -> RegistryStatus {
         match load_candidate(&path, &ids) {
             Ok(candidate) => {
                 status.user += candidate.formats.len();
+                status.profiles.extend(
+                    candidate
+                        .formats
+                        .iter()
+                        .map(|format| profile_summary(format, "user")),
+                );
                 ids.extend(candidate.formats.iter().map(|item| item.id.clone()));
                 merged.formats.extend(candidate.formats);
             }
@@ -227,6 +278,20 @@ fn reload_from_dir(dir: &Path) -> RegistryStatus {
     }
     replace_registry(merged);
     status
+        .profiles
+        .sort_by(|left, right| left.id.cmp(&right.id));
+    status
+}
+
+fn profile_summary(format: &FormatSchema, origin: &str) -> ProfileSummary {
+    ProfileSummary {
+        id: format.id.clone(),
+        application: format
+            .application
+            .clone()
+            .unwrap_or_else(|| format.id.clone()),
+        origin: origin.to_owned(),
+    }
 }
 
 fn load_candidate(path: &Path, existing: &HashSet<String>) -> Result<Schema, String> {

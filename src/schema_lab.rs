@@ -1,10 +1,14 @@
 use crate::ai::{self, AiRequest, ChatMessage, ProviderSettings};
+use std::path::PathBuf;
+
+const SAMPLE_CHARS: usize = 5_000;
 
 #[derive(Debug, Clone)]
 pub(crate) struct SchemaDraft {
     pub(crate) json: String,
     pub(crate) format_ids: Vec<String>,
     pub(crate) event_count: usize,
+    pub(crate) draft_path: PathBuf,
 }
 
 pub(crate) fn generate(
@@ -14,7 +18,7 @@ pub(crate) fn generate(
     raw: String,
 ) -> Result<SchemaDraft, String> {
     settings.max_output_tokens = settings.max_output_tokens.max(2_000);
-    let sample = bounded_sample(&raw, settings.max_input_chars.min(18_000));
+    let sample = bounded_sample(&raw, settings.max_input_chars.min(SAMPLE_CHARS));
     let request = AiRequest {
         settings,
         api_key,
@@ -30,19 +34,23 @@ pub(crate) fn generate(
     let answer = ai::ask(request)?;
     let json = extract_json(&answer.text)?;
     let (json, format_ids, event_count) = crate::parser_registry::validate_draft(json, &raw)?;
+    let draft_path = crate::parser_registry::save_draft(&json)?;
     Ok(SchemaDraft {
         json,
         format_ids,
         event_count,
+        draft_path,
     })
 }
 
 pub(crate) fn install(draft: &SchemaDraft) -> Result<String, String> {
-    crate::parser_registry::install_draft(&draft.json).map(|path| path.display().to_string())
+    let path = crate::parser_registry::install_draft(&draft.json)?;
+    let _ = std::fs::remove_file(&draft.draft_path);
+    Ok(path.display().to_string())
 }
 
 fn bounded_sample(text: &str, limit: usize) -> String {
-    let limit = limit.max(2_000);
+    let limit = limit.clamp(1_000, SAMPLE_CHARS);
     if text.chars().count() <= limit {
         return text.to_owned();
     }

@@ -88,7 +88,7 @@ impl ErrorExplainerApp {
                 ui.horizontal(|ui| {
                     for (page, label) in [
                         (Page::Chat, "Explain"),
-                        (Page::SchemaLab, "Schema Lab"),
+                        (Page::SchemaLab, "Schema"),
                         (Page::Settings, "Settings"),
                         (Page::AboutHelp, "Help"),
                     ] {
