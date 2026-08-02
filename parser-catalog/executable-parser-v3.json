@@ -361,6 +361,22 @@
       "catalog_rank": 40
     },
     {
+      "id": "kafka-broker-log4j", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\[[^]\\n]+\\] (?:TRACE|DEBUG|INFO|WARN|ERROR|FATAL) .+ \\((?:kafka\\.|org\\.apache\\.kafka\\.)"}, {"kind": "regex", "value": "(?:Kafka|broker|ReplicaManager|GroupCoordinator|org\\.apache\\.kafka)"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\[[^]\\n]+\\] (?P<level>TRACE|DEBUG|INFO|WARN|ERROR|FATAL) .+ \\((?:kafka\\.|org\\.apache\\.kafka\\.)", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true},
+      "application": "Apache Kafka broker Log4j2",
+      "catalog_rank": 2
+    },
+    {
+      "id": "opensearch-application-log", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\[\\d{4}-\\d{2}-\\d{2}T[^]\\n]+\\]\\[(?:TRACE|DEBUG|INFO|WARN|ERROR|FATAL) ?\\]\\[[^]\\n]+\\] \\[[^]\\n]+\\]"}, {"kind": "regex", "value": "\\[(?:o\\.o\\.|org\\.opensearch\\.)"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\[\\d{4}-\\d{2}-\\d{2}T[^]\\n]+\\]\\[(?P<level>TRACE|DEBUG|INFO|WARN|ERROR|FATAL) ?\\]\\[[^]\\n]+\\] \\[[^]\\n]+\\]", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true},
+      "application": "OpenSearch application logs",
+      "catalog_rank": 9
+    },
+    {
       "id": "rabbitmq-plaintext", "record_kind": "text",
       "detect": {"all": [{"kind": "regex", "value": "^\\d{4}-\\d{2}-\\d{2}[ T]\\S+ \\[(?:debug|info|warning|error|critical)\\] <\\d+\\.\\d+\\.\\d+>"}, {"kind": "regex", "value": "(?:AMQP|RabbitMQ|rabbit@|vhost|channel|queue)"}], "any": []},
       "parser": {"kind": "line_blocks", "start_regex": "^\\d{4}-\\d{2}-\\d{2}[ T]\\S+ \\[(?P<level>debug|info|warning|error|critical)\\] <\\d+\\.\\d+\\.\\d+>", "severity_capture": "level", "default_severity": "UNKNOWN"},

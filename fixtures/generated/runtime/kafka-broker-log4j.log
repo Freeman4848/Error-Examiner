@@ -1,0 +1,3 @@
+[2026-08-02 11:21:03,104] INFO [KafkaServer id=1] started (kafka.server.KafkaRaftServer)
+[2026-08-02 11:21:08,991] ERROR [ReplicaManager broker=1] Error processing append operation on partition events-0 (kafka.server.ReplicaManager)
+org.apache.kafka.common.errors.NotLeaderOrFollowerException: This server is not the leader for that topic-partition

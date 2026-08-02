@@ -8,3 +8,7 @@ These short synthetic fixtures exercise documented formats without copying full 
   <https://prometheus.io/docs/alerting/latest/configuration/>
 - `rabbitmq-plaintext.log`: RabbitMQ default `$time [$level] $pid $msg` layout:
   <https://www.rabbitmq.com/docs/4.1/logging#log-message-format>
+- `kafka-broker-log4j.log`: Kafka's official `[%d] %p %m (%c)%n` Log4j2 pattern:
+  <https://github.com/apache/kafka/blob/trunk/config/log4j2.yaml>
+- `opensearch-application.log`: OpenSearch application log layout and examples:
+  <https://docs.opensearch.org/latest/install-and-configure/configuring-opensearch/logs/>
