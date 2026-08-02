@@ -353,6 +353,54 @@
       "validation": {"require_events": true, "require_content": true}
     },
     {
+      "id": "prometheus-logfmt", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^ts=\\S+ caller=\\S+ level=(?:debug|info|warn|error)"}, {"kind": "regex", "value": "\\bmsg=\""}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^ts=\\S+ caller=\\S+ level=(?P<level>debug|info|warn|error)", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true},
+      "application": "Prometheus and Alertmanager logfmt",
+      "catalog_rank": 40
+    },
+    {
+      "id": "rabbitmq-plaintext", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^\\d{4}-\\d{2}-\\d{2}[ T]\\S+ \\[(?:debug|info|warning|error|critical)\\] <\\d+\\.\\d+\\.\\d+>"}, {"kind": "regex", "value": "(?:AMQP|RabbitMQ|rabbit@|vhost|channel|queue)"}], "any": []},
+      "parser": {"kind": "line_blocks", "start_regex": "^\\d{4}-\\d{2}-\\d{2}[ T]\\S+ \\[(?P<level>debug|info|warning|error|critical)\\] <\\d+\\.\\d+\\.\\d+>", "severity_capture": "level", "default_severity": "UNKNOWN"},
+      "validation": {"require_events": true, "require_content": true},
+      "application": "RabbitMQ",
+      "catalog_rank": 35
+    },
+    {
+      "id": "elastic-ecs-server-json",
+      "record_kind": "json",
+      "detect": {
+        "all": [
+          {"kind": "path_exists", "value": "$.event.dataset"},
+          {"kind": "regex", "value": "\"event\\.dataset\":\"elasticsearch\\.(?:server|deprecation|audit)\""}
+        ],
+        "any": []
+      },
+      "parser": {
+        "kind": "json_fields",
+        "source_suffix": " / Elastic ECS",
+        "timestamp_paths": ["$.@timestamp"],
+        "severity_paths": ["$.log.level"],
+        "default_severity": "UNKNOWN",
+        "status_paths": [],
+        "nonzero_status_is_error": false,
+        "status_from_text": false,
+        "fields": [
+          {"label": "", "paths": ["$.message"]},
+          {"label": "dataset", "paths": ["$.event.dataset"]},
+          {"label": "error", "paths": ["$.error.message"]},
+          {"label": "stack", "paths": ["$.error.stack_trace"]}
+        ],
+        "fingerprint_paths": ["$.log.level", "$.message", "$.error.type", "$.error.message"],
+        "normalize_fingerprint_digits": true
+      },
+      "validation": {"require_events": true, "require_content": true},
+      "application": "Elasticsearch ECS server logs",
+      "catalog_rank": 8
+    },
+    {
       "id": "gcp-http-request",
       "record_kind": "json",
       "detect": {

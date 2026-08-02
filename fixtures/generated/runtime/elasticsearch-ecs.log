@@ -1,0 +1,2 @@
+{"@timestamp":"2026-08-02T08:14:31.005Z","log.level":"INFO","message":"node started","event.dataset":"elasticsearch.server","service.name":"ES_ECS","elasticsearch.node.name":"node-1"}
+{"@timestamp":"2026-08-02T08:15:02.441Z","log.level":"ERROR","message":"failed to recover shard","event.dataset":"elasticsearch.server","error.type":"org.elasticsearch.ElasticsearchException","error.message":"recovery failed for shard [index][0]"}

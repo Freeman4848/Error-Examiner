@@ -1,0 +1,2 @@
+ts=2026-08-02T08:00:00.000Z caller=main.go:642 level=info msg="Starting Prometheus Server" version="3.0.0"
+ts=2026-08-02T08:00:01.125Z caller=db.go:982 level=error component=tsdb msg="compaction failed" err="open /data/prometheus/block/meta.json: no such file or directory"

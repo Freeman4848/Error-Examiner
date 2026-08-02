@@ -3,7 +3,7 @@
 There is no official global size ranking for application logs. Ordering uses practical
 volume tiers and engineering priority; positions inside a tier are approximate.
 
-Coverage: **38 covered / 12 partial / 50 Raw**.
+Coverage: **41 covered / 12 partial / 47 Raw**.
 
 | # | Volume | Application / source | EE | Adapter or gap |
 |---:|---|---|---|---|
@@ -14,7 +14,7 @@ Coverage: **38 covered / 12 partial / 50 Raw**.
 | 5 | Extreme | GCP Cloud Logging | covered | gcp-http/proto/text/json payload |
 | 6 | Extreme | Azure Monitor and Activity Logs | raw | adapter needed |
 | 7 | Extreme | AWS CloudTrail | raw | adapter needed |
-| 8 | Extreme | Elasticsearch | raw | adapter needed |
+| 8 | Extreme | Elasticsearch | covered | elastic-ecs-server-json |
 | 9 | Extreme | OpenSearch | raw | adapter needed |
 | 10 | Extreme | Hadoop MapReduce | covered | hadoop |
 | 11 | Extreme | HDFS | covered | hdfs |
@@ -41,12 +41,12 @@ Coverage: **38 covered / 12 partial / 50 Raw**.
 | 32 | High | macOS Unified Log | covered | mac-unified-syslog |
 | 33 | High | OpenStack | covered | openstack |
 | 34 | High | Apache ZooKeeper | covered | zookeeper |
-| 35 | High | RabbitMQ | raw | adapter needed |
+| 35 | High | RabbitMQ | covered | rabbitmq-plaintext |
 | 36 | High | Apache ActiveMQ | raw | adapter needed |
 | 37 | High | Apache Pulsar | raw | adapter needed |
 | 38 | High | NATS | raw | adapter needed |
 | 39 | High | Redis | covered | redis-log |
-| 40 | High | Prometheus server | raw | adapter needed |
+| 40 | High | Prometheus server | covered | prometheus-logfmt |
 | 41 | High | Grafana Loki | raw | adapter needed |
 | 42 | High | OpenTelemetry Collector | raw | OTLP JSON adapter needed |
 | 43 | High | Fluent Bit | raw | adapter needed |

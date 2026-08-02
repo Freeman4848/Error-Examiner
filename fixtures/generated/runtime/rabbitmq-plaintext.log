@@ -1,0 +1,2 @@
+2026-08-02 11:02:03.338587+03:00 [info] <0.899.0> accepting AMQP connection 127.0.0.1:57604 -> 127.0.0.1:5672
+2026-08-02 11:02:05.112004+03:00 [error] <0.899.0> closing AMQP connection: access to vhost '/private' refused for user 'guest'

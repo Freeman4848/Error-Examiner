@@ -240,9 +240,10 @@ fn json_records(input: &str) -> Option<Vec<Value>> {
 }
 
 fn at_path<'a>(value: &'a Value, path: &str) -> Option<&'a Value> {
-    path.strip_prefix("$.")?
-        .split('.')
-        .try_fold(value, |item, key| item.get(key))
+    let path = path.strip_prefix("$.")?;
+    value
+        .get(path)
+        .or_else(|| path.split('.').try_fold(value, |item, key| item.get(key)))
 }
 
 fn first_value(value: &Value, paths: &[String]) -> Option<String> {
