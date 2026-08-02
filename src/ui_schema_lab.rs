@@ -38,21 +38,36 @@ impl ErrorExplainerApp {
                     if ui.button("Reload").clicked() {
                         self.schema_registry = parser_registry::reload_user_schemas();
                     }
+                    if ui
+                        .add_enabled(
+                            self.schema_ui.selected_profile.is_some(),
+                            egui::Button::new("Preview selected"),
+                        )
+                        .clicked()
+                    {
+                        self.preview_selected_schema();
+                    }
                 });
-
+                self.selected_schema_preview(ui);
                 self.schema_index(ui, colors);
                 ui.separator();
                 ui.heading("New schema");
                 ui.label("Only 5000 characters (head + tail) are sent to the selected AI. Full log validation stays local.");
-                ui.horizontal(|ui| {
-                    if ui.button("Add · choose log").clicked() {
-                        self.pick_schema_log();
-                    }
-                    if !self.schema_ui.log_name.is_empty() {
+                if ui
+                    .add_sized(
+                        [ui.available_width(), 44.0],
+                        egui::Button::new(RichText::new("+  Add log file").strong()),
+                    )
+                    .clicked()
+                {
+                    self.pick_schema_log();
+                }
+                if !self.schema_ui.log_name.is_empty() {
+                    ui.horizontal(|ui| {
                         ui.label(RichText::new(&self.schema_ui.log_name).strong());
                         ui.label(format!("{} chars", self.schema_ui.log_raw.chars().count()));
-                    }
-                });
+                    });
+                }
                 if ui
                     .add_enabled(
                         !self.schema_pending && !self.schema_ui.log_raw.is_empty(),
@@ -74,48 +89,42 @@ impl ErrorExplainerApp {
     fn schema_index(&mut self, ui: &mut egui::Ui, colors: crate::theme::Palette) {
         let profiles = self.schema_registry.profiles.clone();
         ScrollArea::vertical().max_height(250.0).show(ui, |ui| {
-            egui::Grid::new("schema_index")
-                .striped(true)
-                .min_col_width(100.0)
-                .show(ui, |ui| {
-                    ui.label(RichText::new("Profile").strong());
-                    ui.label(RichText::new("Application").strong());
-                    ui.label(RichText::new("Origin").strong());
-                    ui.end_row();
-                    for profile in profiles {
-                        let selected =
-                            self.schema_ui.selected_profile.as_deref() == Some(&profile.id);
-                        if ui.selectable_label(selected, &profile.id).clicked() {
-                            self.schema_ui.selected_profile = Some(profile.id.clone());
-                        }
-                        ui.label(profile.application);
-                        ui.colored_label(colors.muted, profile.origin);
-                        ui.end_row();
-                    }
-                });
-        });
-        ui.horizontal(|ui| {
-            if ui
-                .add_enabled(
-                    self.schema_ui.selected_profile.is_some(),
-                    egui::Button::new("Preview selected"),
-                )
-                .clicked()
-            {
-                if let Some(id) = &self.schema_ui.selected_profile {
-                    match parser_registry::profile_json(id) {
-                        Ok(json) => self.schema_ui.profile_preview = json,
-                        Err(error) => self.schema_status = error,
-                    }
+            for profile in profiles {
+                let selected = self.schema_ui.selected_profile.as_deref() == Some(&profile.id);
+                let row = format!(
+                    "{}   ·   {}   ·   {}",
+                    profile.id, profile.application, profile.origin
+                );
+                if ui
+                    .add_sized(
+                        [ui.available_width(), 28.0],
+                        egui::SelectableLabel::new(selected, row),
+                    )
+                    .clicked()
+                {
+                    self.schema_ui.selected_profile = Some(profile.id);
                 }
             }
-            if !self.schema_registry.rejected.is_empty() {
-                ui.colored_label(
-                    colors.user,
-                    format!("{} rejected", self.schema_registry.rejected.len()),
-                );
-            }
         });
+        if !self.schema_registry.rejected.is_empty() {
+            ui.colored_label(
+                colors.user,
+                format!("{} rejected", self.schema_registry.rejected.len()),
+            );
+        }
+    }
+
+    fn preview_selected_schema(&mut self) {
+        let Some(id) = &self.schema_ui.selected_profile else {
+            return;
+        };
+        match parser_registry::profile_json(id) {
+            Ok(json) => self.schema_ui.profile_preview = json,
+            Err(error) => self.schema_status = error,
+        }
+    }
+
+    fn selected_schema_preview(&mut self, ui: &mut egui::Ui) {
         if !self.schema_ui.profile_preview.is_empty() {
             ui.collapsing("Selected schema preview", |ui| {
                 if ui.button("Copy JSON").clicked() {
@@ -186,6 +195,18 @@ impl ErrorExplainerApp {
             ScrollArea::vertical().max_height(260.0).show(ui, |ui| {
                 ui.add(egui::Label::new(RichText::new(&draft.json).monospace()).selectable(true));
             });
+            ui.separator();
+            ui.label(RichText::new("MODEL RESPONSE").strong());
+            egui::Frame::none()
+                .fill(ui.visuals().faint_bg_color)
+                .rounding(egui::Rounding::same(10.0))
+                .inner_margin(egui::Margin::same(12.0))
+                .show(ui, |ui| {
+                    ui.label(&draft.model_answer);
+                    ui.label(
+                        RichText::new(format!("Saved: {}", draft.response_path.display())).small(),
+                    );
+                });
         }
         if install {
             self.install_schema_draft();

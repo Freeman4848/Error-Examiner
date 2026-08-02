@@ -9,6 +9,8 @@ pub(crate) struct SchemaDraft {
     pub(crate) format_ids: Vec<String>,
     pub(crate) event_count: usize,
     pub(crate) draft_path: PathBuf,
+    pub(crate) model_answer: String,
+    pub(crate) response_path: PathBuf,
 }
 
 pub(crate) fn generate(
@@ -17,8 +19,11 @@ pub(crate) fn generate(
     name: String,
     raw: String,
 ) -> Result<SchemaDraft, String> {
+    let provider = settings.provider.label().to_owned();
+    let configured_model = settings.model.clone();
     settings.max_output_tokens = settings.max_output_tokens.max(2_000);
     let sample = bounded_sample(&raw, settings.max_input_chars.min(SAMPLE_CHARS));
+    let sample_chars = sample.chars().count();
     let request = AiRequest {
         settings,
         api_key,
@@ -32,15 +37,60 @@ pub(crate) fn generate(
         }],
     };
     let answer = ai::ask(request)?;
-    let json = extract_json(&answer.text)?;
+    let model = answer.resolved_model.unwrap_or(configured_model);
+    let model_answer = answer.text;
+    let json = extract_json(&model_answer)?;
     let (json, format_ids, event_count) = crate::parser_registry::validate_draft(json, &raw)?;
     let draft_path = crate::parser_registry::save_draft(&json)?;
+    let response_path = save_response(
+        &name,
+        &provider,
+        &model,
+        sample_chars,
+        &model_answer,
+        &json,
+        format_ids.first().map(String::as_str).unwrap_or("schema"),
+    )?;
     Ok(SchemaDraft {
         json,
         format_ids,
         event_count,
         draft_path,
+        model_answer,
+        response_path,
     })
+}
+
+fn save_response(
+    log_name: &str,
+    provider: &str,
+    model: &str,
+    sample_chars: usize,
+    model_answer: &str,
+    schema: &str,
+    id: &str,
+) -> Result<PathBuf, String> {
+    let now = chrono::Local::now();
+    let dir = crate::storage::app_dir()
+        .join("schema-drafts")
+        .join("responses");
+    std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
+    let path = dir.join(format!("{}-{id}.json", now.format("%Y%m%d-%H%M%S")));
+    let schema: serde_json::Value =
+        serde_json::from_str(schema).map_err(|error| error.to_string())?;
+    let envelope = serde_json::json!({
+        "metadata_version": 1,
+        "created_at": now.to_rfc3339(),
+        "source_log": log_name,
+        "provider": provider,
+        "model": model,
+        "sample_chars_sent": sample_chars,
+        "model_answer": model_answer,
+        "validated_schema": schema
+    });
+    let data = serde_json::to_string_pretty(&envelope).map_err(|error| error.to_string())?;
+    std::fs::write(&path, data).map_err(|error| error.to_string())?;
+    Ok(path)
 }
 
 pub(crate) fn install(draft: &SchemaDraft) -> Result<String, String> {
