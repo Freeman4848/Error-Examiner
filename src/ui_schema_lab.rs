@@ -88,20 +88,11 @@ impl ErrorExplainerApp {
 
     fn schema_index(&mut self, ui: &mut egui::Ui, colors: crate::theme::Palette) {
         let profiles = self.schema_registry.profiles.clone();
+        schema_table_header(ui, colors);
         ScrollArea::vertical().max_height(250.0).show(ui, |ui| {
-            for profile in profiles {
+            for (index, profile) in profiles.into_iter().enumerate() {
                 let selected = self.schema_ui.selected_profile.as_deref() == Some(&profile.id);
-                let row = format!(
-                    "{}   ·   {}   ·   {}",
-                    profile.id, profile.application, profile.origin
-                );
-                if ui
-                    .add_sized(
-                        [ui.available_width(), 28.0],
-                        egui::SelectableLabel::new(selected, row),
-                    )
-                    .clicked()
-                {
+                if schema_table_row(ui, &profile, selected, index, colors) {
                     self.schema_ui.selected_profile = Some(profile.id);
                 }
             }
@@ -226,4 +217,112 @@ impl ErrorExplainerApp {
             Err(error) => self.schema_status = format!("Activation failed: {error}"),
         }
     }
+}
+
+fn schema_table_header(ui: &mut egui::Ui, colors: crate::theme::Palette) {
+    let (rect, _) =
+        ui.allocate_exact_size(egui::vec2(ui.available_width(), 32.0), egui::Sense::hover());
+    let painter = ui.painter();
+    painter.rect_filled(rect, 4.0, colors.card);
+    paint_table_lines(painter, rect, colors.border);
+    paint_table_text(
+        painter,
+        rect,
+        "Profile",
+        "Application",
+        "Origin",
+        colors.text,
+        true,
+    );
+}
+
+fn schema_table_row(
+    ui: &mut egui::Ui,
+    profile: &parser_registry::ProfileSummary,
+    selected: bool,
+    index: usize,
+    colors: crate::theme::Palette,
+) -> bool {
+    let (rect, response) =
+        ui.allocate_exact_size(egui::vec2(ui.available_width(), 34.0), egui::Sense::click());
+    let fill = if selected {
+        colors.accent
+    } else if response.hovered() {
+        colors.border
+    } else if index % 2 == 1 {
+        colors.card
+    } else {
+        Color32::TRANSPARENT
+    };
+    let painter = ui.painter();
+    painter.rect_filled(rect, 0.0, fill);
+    paint_table_lines(painter, rect, colors.border);
+    paint_table_text(
+        painter,
+        rect,
+        &profile.id,
+        &profile.application,
+        &profile.origin,
+        colors.text,
+        false,
+    );
+    response.clicked()
+}
+
+fn paint_table_lines(painter: &egui::Painter, rect: egui::Rect, color: Color32) {
+    let (first, second) = table_dividers(rect);
+    let stroke = egui::Stroke::new(1.0, color);
+    painter.line_segment(
+        [
+            egui::pos2(first, rect.top()),
+            egui::pos2(first, rect.bottom()),
+        ],
+        stroke,
+    );
+    painter.line_segment(
+        [
+            egui::pos2(second, rect.top()),
+            egui::pos2(second, rect.bottom()),
+        ],
+        stroke,
+    );
+    painter.line_segment([rect.left_bottom(), rect.right_bottom()], stroke);
+}
+
+fn paint_table_text(
+    painter: &egui::Painter,
+    rect: egui::Rect,
+    profile: &str,
+    application: &str,
+    origin: &str,
+    color: Color32,
+    strong: bool,
+) {
+    let (first, second) = table_dividers(rect);
+    let font = egui::FontId::proportional(if strong { 14.0 } else { 13.5 });
+    let cells = [
+        (rect.left(), first, profile),
+        (first, second, application),
+        (second, rect.right(), origin),
+    ];
+    for (left, right, text) in cells {
+        let clip = egui::Rect::from_min_max(
+            egui::pos2(left + 1.0, rect.top()),
+            egui::pos2(right - 1.0, rect.bottom()),
+        );
+        painter.with_clip_rect(clip).text(
+            egui::pos2(left + 9.0, rect.center().y),
+            egui::Align2::LEFT_CENTER,
+            text,
+            font.clone(),
+            color,
+        );
+    }
+}
+
+fn table_dividers(rect: egui::Rect) -> (f32, f32) {
+    (
+        rect.left() + rect.width() * 0.38,
+        rect.left() + rect.width() * 0.84,
+    )
 }
