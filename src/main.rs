@@ -17,6 +17,7 @@ mod parser_text;
 mod preprocess;
 mod preprocess_raw;
 mod schema_lab;
+mod schema_management;
 mod storage;
 mod theme;
 mod ui;
@@ -216,6 +217,7 @@ impl ErrorExplainerApp {
         let (schema_sender, schema_receiver) = mpsc::channel();
         let (hotkey_manager, hotkey_receiver) = hotkey::register(&creation_context.egui_ctx);
         let app_icon_texture = load_app_texture(&creation_context.egui_ctx);
+        let backup_status = schema_management::ensure_backup();
         let schema_registry = parser_registry::reload_user_schemas();
         let schema_coverage = parser_registry::coverage();
         debug_assert_eq!(
@@ -254,7 +256,9 @@ impl ErrorExplainerApp {
             schema_receiver,
             schema_draft: None,
             schema_pending: false,
-            schema_status: "Select Add and choose a log to begin.".to_owned(),
+            schema_status: backup_status
+                .err()
+                .unwrap_or_else(|| "Select Add and choose a log to begin.".to_owned()),
             schema_ui: ui_schema_lab::SchemaUiState::default(),
             settings,
             api_key: String::new(),

@@ -9,6 +9,8 @@ pub(crate) struct SchemaUiState {
     log_raw: String,
     index_status: String,
     existing_profile: Option<String>,
+    update_target: Option<String>,
+    restore_confirm: bool,
     pub(crate) scroll_to_response: bool,
 }
 
@@ -32,7 +34,7 @@ impl ErrorExplainerApp {
                 );
                 ui.horizontal(|ui| {
                     ui.label(
-                        RichText::new(format!("{} active", self.schema_registry.profiles.len()))
+                        RichText::new(format!("{} active", self.schema_registry.active))
                             .size(24.0)
                             .strong()
                             .color(colors.assistant),
@@ -61,6 +63,7 @@ impl ErrorExplainerApp {
                         self.preview_selected_schema();
                     }
                 });
+                self.schema_profile_actions(ui, colors);
                 if !self.schema_ui.index_status.is_empty() {
                     ui.label(
                         RichText::new(&self.schema_ui.index_status)
@@ -80,6 +83,7 @@ impl ErrorExplainerApp {
                     )
                     .clicked()
                 {
+                    self.schema_ui.update_target = None;
                     self.pick_schema_log();
                 }
                 if !self.schema_ui.log_name.is_empty() {
@@ -97,7 +101,8 @@ impl ErrorExplainerApp {
                     .add_enabled_ui(
                             !self.schema_pending
                                 && !self.schema_ui.log_raw.is_empty()
-                                && self.schema_ui.existing_profile.is_none(),
+                                && (self.schema_ui.existing_profile.is_none()
+                                    || self.schema_ui.update_target.is_some()),
                         |ui| {
                             ui.add_sized(
                                 [ui.available_width(), 46.0],
@@ -129,6 +134,63 @@ impl ErrorExplainerApp {
                 self.schema_draft_preview(ui);
                     });
             });
+    }
+
+    fn schema_profile_actions(&mut self, ui: &mut egui::Ui, colors: crate::theme::Palette) {
+        let selected = self.schema_ui.selected_profile.clone();
+        let profile = selected.as_ref().and_then(|id| {
+            self.schema_registry
+                .profiles
+                .iter()
+                .find(|profile| &profile.id == id)
+                .cloned()
+        });
+        ui.horizontal(|ui| {
+            if let Some(profile) = &profile {
+                let label = if profile.active { "Disable" } else { "Enable" };
+                if ui.button(label).clicked() {
+                    match parser_registry::set_profile_disabled(&profile.id, profile.active) {
+                        Ok(registry) => {
+                            self.schema_registry = registry;
+                            self.schema_status = format!("{label}d: {}", profile.id);
+                        }
+                        Err(error) => self.schema_status = format!("Schema state error: {error}"),
+                    }
+                }
+                if ui.button("Update").clicked() {
+                    self.schema_ui.update_target = Some(profile.id.clone());
+                    self.pick_schema_log();
+                }
+            }
+            if ui.button("Restore defaults").clicked() {
+                self.schema_ui.restore_confirm = true;
+            }
+        });
+        ui.label(
+            RichText::new(
+                "Disable is reversible. Update creates an override; defaults stay intact.",
+            )
+            .small()
+            .color(colors.muted),
+        );
+        if self.schema_ui.restore_confirm {
+            ui.horizontal(|ui| {
+                ui.colored_label(colors.user, "Restore built-ins and archive all overrides?");
+                if ui.button("Confirm restore").clicked() {
+                    match parser_registry::restore_defaults() {
+                        Ok((registry, message)) => {
+                            self.schema_registry = registry;
+                            self.schema_status = message;
+                        }
+                        Err(error) => self.schema_status = error,
+                    }
+                    self.schema_ui.restore_confirm = false;
+                }
+                if ui.button("Cancel").clicked() {
+                    self.schema_ui.restore_confirm = false;
+                }
+            });
+        }
     }
 
     fn schema_index(&mut self, ui: &mut egui::Ui, colors: crate::theme::Palette) {
@@ -185,8 +247,9 @@ impl ErrorExplainerApp {
             Ok(Some(attachment::InputFile::Log { name, text })) => {
                 let total = text.chars().count();
                 let parsed = parser_schema::parse(&text);
-                self.schema_ui.existing_profile =
-                    parsed.supported.then(|| parsed.format_ids.join(" + "));
+                self.schema_ui.existing_profile = (self.schema_ui.update_target.is_none()
+                    && parsed.supported)
+                    .then(|| parsed.format_ids.join(" + "));
                 self.schema_ui.log_name = name;
                 self.schema_ui.log_raw = text;
                 self.schema_draft = None;
@@ -204,7 +267,9 @@ impl ErrorExplainerApp {
     }
 
     fn start_schema_generation(&mut self, context: &egui::Context) {
-        if self.schema_ui.log_raw.is_empty() || self.schema_ui.existing_profile.is_some() {
+        if self.schema_ui.log_raw.is_empty()
+            || (self.schema_ui.existing_profile.is_some() && self.schema_ui.update_target.is_none())
+        {
             return;
         }
         self.schema_pending = true;
@@ -214,10 +279,11 @@ impl ErrorExplainerApp {
         let api_key = self.api_key.clone();
         let name = self.schema_ui.log_name.clone();
         let raw = self.schema_ui.log_raw.clone();
+        let update_target = self.schema_ui.update_target.clone();
         let sender = self.schema_sender.clone();
         let repaint = context.clone();
         std::thread::spawn(move || {
-            let result = schema_lab::generate(settings, api_key, name, raw);
+            let result = schema_lab::generate(settings, api_key, name, raw, update_target);
             let _ = sender.send(result);
             repaint.request_repaint();
         });
@@ -269,6 +335,7 @@ impl ErrorExplainerApp {
                 self.schema_registry = parser_registry::reload_user_schemas();
                 self.schema_status = format!("Activated: {path}");
                 self.schema_draft = None;
+                self.schema_ui.update_target = None;
             }
             Err(error) => self.schema_status = format!("Activation failed: {error}"),
         }
@@ -318,7 +385,11 @@ fn schema_table_row(
         rect,
         &profile.id,
         &profile.application,
-        &profile.origin,
+        &if profile.active {
+            profile.origin.clone()
+        } else {
+            format!("{} · disabled", profile.origin)
+        },
         colors.text,
         false,
     );

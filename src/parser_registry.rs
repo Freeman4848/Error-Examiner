@@ -100,6 +100,7 @@ pub(crate) struct FieldValueRule {
 pub(crate) struct RegistryStatus {
     pub(crate) built_in: usize,
     pub(crate) user: usize,
+    pub(crate) active: usize,
     pub(crate) rejected: Vec<String>,
     pub(crate) profiles: Vec<ProfileSummary>,
 }
@@ -109,6 +110,7 @@ pub(crate) struct ProfileSummary {
     pub(crate) id: String,
     pub(crate) application: String,
     pub(crate) origin: String,
+    pub(crate) active: bool,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -173,6 +175,42 @@ pub(crate) fn validate_draft(
     Ok((json, parsed.format_ids, parsed.events.len()))
 }
 
+pub(crate) fn validate_update_draft(
+    text: &str,
+    sample: &str,
+    target: &str,
+) -> Result<(String, Vec<String>, usize), String> {
+    let mut schema: Schema =
+        serde_json::from_str(text).map_err(|error| format!("Schema JSON: {error}"))?;
+    if schema.formats.len() != 1 {
+        return Err("an update must contain exactly one format".into());
+    }
+    schema.formats[0].id = target.to_owned();
+    validate_schema(&schema)?;
+    let parsed = crate::parser_schema::parse_with_schema(sample, &schema);
+    if !parsed.supported || parsed.events.is_empty() {
+        return Err("updated schema does not parse the supplied sample".into());
+    }
+    let json = serde_json::to_string_pretty(&schema).map_err(|error| error.to_string())?;
+    Ok((json, parsed.format_ids, parsed.events.len()))
+}
+
+pub(crate) fn install_override(text: &str) -> Result<PathBuf, String> {
+    let schema: Schema = serde_json::from_str(text).map_err(|error| error.to_string())?;
+    validate_schema(&schema)?;
+    crate::schema_management::install_override(&schema)
+}
+
+pub(crate) fn set_profile_disabled(id: &str, disabled: bool) -> Result<RegistryStatus, String> {
+    crate::schema_management::set_disabled(id, disabled)?;
+    Ok(reload_user_schemas())
+}
+
+pub(crate) fn restore_defaults() -> Result<(RegistryStatus, String), String> {
+    let message = crate::schema_management::restore_defaults()?;
+    Ok((reload_user_schemas(), message))
+}
+
 pub(crate) fn install_draft(text: &str) -> Result<PathBuf, String> {
     let schema: Schema = serde_json::from_str(text).map_err(|error| error.to_string())?;
     validate_schema(&schema)?;
@@ -215,6 +253,13 @@ pub(crate) fn profile_json(id: &str) -> Result<String, String> {
         .iter()
         .find(|format| format.id == id)
         .cloned()
+        .or_else(|| crate::schema_management::stored_format(id))
+        .or_else(|| {
+            built_in()
+                .formats
+                .into_iter()
+                .find(|format| format.id == id)
+        })
         .ok_or_else(|| format!("profile not found: {id}"))?;
     serde_json::to_string_pretty(&Schema {
         schema_version: 3,
@@ -249,11 +294,12 @@ fn reload_from_dir(dir: &Path) -> RegistryStatus {
             .collect(),
         ..Default::default()
     };
-    let Ok(entries) = fs::read_dir(dir) else {
-        replace_registry(merged);
-        return status;
-    };
-    let mut paths: Vec<PathBuf> = entries.flatten().map(|entry| entry.path()).collect();
+    let mut paths: Vec<PathBuf> = fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|entry| entry.path())
+        .collect();
     paths.sort();
     for path in paths
         .into_iter()
@@ -276,6 +322,7 @@ fn reload_from_dir(dir: &Path) -> RegistryStatus {
                 .push(format!("{}: {error}", file_name(&path))),
         }
     }
+    crate::schema_management::apply(&mut merged, &mut status);
     replace_registry(merged);
     status
         .profiles
@@ -291,6 +338,7 @@ fn profile_summary(format: &FormatSchema, origin: &str) -> ProfileSummary {
             .clone()
             .unwrap_or_else(|| format.id.clone()),
         origin: origin.to_owned(),
+        active: true,
     }
 }
 
@@ -308,7 +356,7 @@ fn load_candidate(path: &Path, existing: &HashSet<String>) -> Result<Schema, Str
     Ok(schema)
 }
 
-fn validate_schema(schema: &Schema) -> Result<(), String> {
+pub(crate) fn validate_schema(schema: &Schema) -> Result<(), String> {
     if schema.schema_version != 3 || schema.fallback != "raw" {
         return Err("expected schema_version 3 and raw fallback".into());
     }
@@ -420,5 +468,14 @@ mod tests {
             formats: Vec::new(),
         };
         assert!(validate_schema(&schema).is_err());
+    }
+
+    #[test]
+    fn validates_a_non_destructive_profile_update() {
+        let schema = profile_json("cargo-rustc-error").unwrap();
+        let sample = include_str!("../fixtures/broken-rust/broken-rust.log");
+        let (_, ids, events) = validate_update_draft(&schema, sample, "cargo-rustc-error").unwrap();
+        assert_eq!(ids, ["cargo-rustc-error"]);
+        assert!(events > 0);
     }
 }

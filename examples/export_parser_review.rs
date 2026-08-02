@@ -10,6 +10,8 @@ mod parser_text;
 mod preprocess;
 #[path = "../src/preprocess_raw.rs"]
 mod preprocess_raw;
+#[path = "../src/schema_management.rs"]
+mod schema_management;
 #[path = "../src/storage.rs"]
 mod storage;
 

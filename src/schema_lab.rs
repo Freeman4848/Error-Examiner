@@ -11,6 +11,7 @@ pub(crate) struct SchemaDraft {
     pub(crate) draft_path: PathBuf,
     pub(crate) model_answer: String,
     pub(crate) response_path: PathBuf,
+    pub(crate) update_target: Option<String>,
 }
 
 pub(crate) fn generate(
@@ -18,9 +19,10 @@ pub(crate) fn generate(
     api_key: String,
     name: String,
     raw: String,
+    update_target: Option<String>,
 ) -> Result<SchemaDraft, String> {
     let existing = crate::parser_schema::parse(&raw);
-    if existing.supported {
+    if existing.supported && update_target.is_none() {
         return Err(format!(
             "log is already covered by {}; new schema is unnecessary",
             existing.format_ids.join(" + ")
@@ -31,13 +33,17 @@ pub(crate) fn generate(
     settings.max_output_tokens = settings.max_output_tokens.max(2_000);
     let sample = bounded_sample(&raw, settings.max_input_chars.min(SAMPLE_CHARS));
     let sample_chars = sample.chars().count();
+    let update_instruction = update_target
+        .as_ref()
+        .map(|id| format!("\nUPDATE PROFILE: Return exactly one format with id {id}."))
+        .unwrap_or_default();
     let request = AiRequest {
         settings,
         api_key,
         system_prompt: Some(generator_prompt().to_owned()),
         messages: vec![ChatMessage {
             role: "user".into(),
-            content: format!("FILE: {name}\nLOG SAMPLE:\n{sample}"),
+            content: format!("FILE: {name}{update_instruction}\nLOG SAMPLE:\n{sample}"),
             timestamp: ai::now_timestamp(),
             sections: None,
             image: None,
@@ -47,7 +53,11 @@ pub(crate) fn generate(
     let model = answer.resolved_model.unwrap_or(configured_model);
     let model_answer = answer.text;
     let json = extract_json(&model_answer)?;
-    let (json, format_ids, event_count) = crate::parser_registry::validate_draft(json, &raw)?;
+    let (json, format_ids, event_count) = if let Some(target) = &update_target {
+        crate::parser_registry::validate_update_draft(json, &raw, target)?
+    } else {
+        crate::parser_registry::validate_draft(json, &raw)?
+    };
     let draft_path = crate::parser_registry::save_draft(&json)?;
     let response_path = save_response(
         &name,
@@ -65,6 +75,7 @@ pub(crate) fn generate(
         draft_path,
         model_answer,
         response_path,
+        update_target,
     })
 }
 
@@ -101,7 +112,11 @@ fn save_response(
 }
 
 pub(crate) fn install(draft: &SchemaDraft) -> Result<String, String> {
-    let path = crate::parser_registry::install_draft(&draft.json)?;
+    let path = if draft.update_target.is_some() {
+        crate::parser_registry::install_override(&draft.json)?
+    } else {
+        crate::parser_registry::install_draft(&draft.json)?
+    };
     let _ = std::fs::remove_file(&draft.draft_path);
     Ok(path.display().to_string())
 }
@@ -152,6 +167,7 @@ mod tests {
             String::new(),
             "broken-rust.log".into(),
             include_str!("../fixtures/broken-rust/broken-rust.log").into(),
+            None,
         )
         .unwrap_err();
         assert!(error.contains("already covered by cargo-rustc-error"));
