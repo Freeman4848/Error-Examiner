@@ -20,6 +20,9 @@ impl ErrorExplainerApp {
                     .inner_margin(egui::Margin::same(18.0)),
             )
             .show(context, |ui| {
+                ScrollArea::vertical()
+                    .id_source("schema_page_scroll")
+                    .show(ui, |ui| {
                 ui.heading("Schema");
                 ui.label(
                     RichText::new("Active parser profile index")
@@ -89,20 +92,30 @@ impl ErrorExplainerApp {
                     }
                 }
                 if ui
-                    .add_enabled(
+                    .add_enabled_ui(
                         !self.schema_pending && !self.schema_ui.log_raw.is_empty(),
-                        egui::Button::new(if self.schema_pending {
-                            "Generating and validating…"
-                        } else {
-                            "Generate draft"
-                        }),
+                        |ui| {
+                            ui.add_sized(
+                                [ui.available_width(), 46.0],
+                                egui::Button::new(
+                                    RichText::new(if self.schema_pending {
+                                        "Generating and validating…"
+                                    } else {
+                                        "Generate schema draft"
+                                    })
+                                    .strong(),
+                                ),
+                            )
+                        },
                     )
+                    .inner
                     .clicked()
                 {
                     self.start_schema_generation(context);
                 }
                 ui.label(RichText::new(&self.schema_status).color(colors.muted));
                 self.schema_draft_preview(ui);
+                    });
             });
     }
 
