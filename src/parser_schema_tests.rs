@@ -72,6 +72,23 @@ fn parses_known_gap_corpus() {
     }
 }
 
+#[test]
+fn classifies_vpc_reject_and_skipdata_as_important() {
+    let text = include_str!("../fixtures/generated/runtime/aws-vpc-flow-default.log");
+    let parsed = parser_schema::parse(text);
+    assert!(parsed.supported);
+    assert_eq!(parsed.format_ids, ["aws-vpc-flow-default"]);
+    assert_eq!(parsed.events.len(), 3);
+    assert_eq!(
+        parsed
+            .events
+            .iter()
+            .filter(|event| event.severity != parser_schema::Severity::Info)
+            .count(),
+        2
+    );
+}
+
 fn visit_logs(path: &Path, callback: &mut impl FnMut(&Path)) {
     for entry in std::fs::read_dir(path).expect("fixture directory must exist") {
         let path = entry.expect("fixture entry must be readable").path();

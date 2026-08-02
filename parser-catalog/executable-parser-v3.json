@@ -361,6 +361,23 @@
       "catalog_rank": 40
     },
     {
+      "id": "aws-vpc-flow-default", "record_kind": "text",
+      "detect": {"all": [{"kind": "regex", "value": "^2 \\d{12} eni-[0-9a-z]+ \\S+ \\S+ \\S+ \\S+ \\S+ \\S+ \\S+ \\S+ \\S+ (?:ACCEPT|REJECT|-) (?:OK|NODATA|SKIPDATA)$"}, {"kind": "regex", "value": "(?: ACCEPT OK| REJECT OK| - (?:NODATA|SKIPDATA))$"}], "any": []},
+      "parser": {
+        "kind": "delimited_lines",
+        "delimiter": "whitespace",
+        "fields": ["version", "account-id", "interface-id", "srcaddr", "dstaddr", "srcport", "dstport", "protocol", "packets", "bytes", "start", "end", "action", "log-status"],
+        "severity_rules": [
+          {"field": "action", "values": ["REJECT"], "severity": "ERROR"},
+          {"field": "log-status", "values": ["SKIPDATA"], "severity": "WARNING"}
+        ],
+        "default_severity": "INFO"
+      },
+      "validation": {"require_events": true, "require_content": true},
+      "application": "AWS VPC Flow Logs default format",
+      "catalog_rank": 3
+    },
+    {
       "id": "kafka-broker-log4j", "record_kind": "text",
       "detect": {"all": [{"kind": "regex", "value": "^\\[[^]\\n]+\\] (?:TRACE|DEBUG|INFO|WARN|ERROR|FATAL) .+ \\((?:kafka\\.|org\\.apache\\.kafka\\.)"}, {"kind": "regex", "value": "(?:Kafka|broker|ReplicaManager|GroupCoordinator|org\\.apache\\.kafka)"}], "any": []},
       "parser": {"kind": "line_blocks", "start_regex": "^\\[[^]\\n]+\\] (?P<level>TRACE|DEBUG|INFO|WARN|ERROR|FATAL) .+ \\((?:kafka\\.|org\\.apache\\.kafka\\.)", "severity_capture": "level", "default_severity": "UNKNOWN"},

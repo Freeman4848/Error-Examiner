@@ -63,6 +63,12 @@ pub(crate) enum ParserSpec {
         severity: String,
     },
     Buildkit,
+    DelimitedLines {
+        delimiter: String,
+        fields: Vec<String>,
+        severity_rules: Vec<FieldValueRule>,
+        default_severity: String,
+    },
     JsonFields {
         source_suffix: String,
         timestamp_paths: Vec<String>,
@@ -81,6 +87,13 @@ pub(crate) enum ParserSpec {
 pub(crate) struct FieldSpec {
     pub(crate) label: String,
     pub(crate) paths: Vec<String>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+pub(crate) struct FieldValueRule {
+    pub(crate) field: String,
+    pub(crate) values: Vec<String>,
+    pub(crate) severity: String,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -269,6 +282,29 @@ fn validate_schema(schema: &Schema) -> Result<(), String> {
             | ParserSpec::LineBlocks { start_regex, .. } => validate_regex(start_regex)?,
             ParserSpec::JsonFields { .. } if format.record_kind != "json" => {
                 return Err(format!("json parser on text format: {}", format.id))
+            }
+            ParserSpec::DelimitedLines {
+                delimiter,
+                fields,
+                severity_rules,
+                ..
+            } => {
+                if !matches!(delimiter.as_str(), "whitespace" | "tab" | "comma" | "pipe") {
+                    return Err(format!("unsupported delimiter: {}", format.id));
+                }
+                if fields.is_empty() || fields.len() > 64 {
+                    return Err(format!(
+                        "delimited fields must contain 1..64 items: {}",
+                        format.id
+                    ));
+                }
+                if severity_rules.iter().any(|rule| {
+                    !fields.contains(&rule.field)
+                        || rule.values.is_empty()
+                        || rule.severity.trim().is_empty()
+                }) {
+                    return Err(format!("invalid severity rule: {}", format.id));
+                }
             }
             _ => {}
         }

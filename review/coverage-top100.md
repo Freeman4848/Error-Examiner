@@ -3,13 +3,13 @@
 There is no official global size ranking for application logs. Ordering uses practical
 volume tiers and engineering priority; positions inside a tier are approximate.
 
-Coverage: **43 covered / 12 partial / 45 Raw**.
+Coverage: **44 covered / 12 partial / 44 Raw**.
 
 | # | Volume | Application / source | EE | Adapter or gap |
 |---:|---|---|---|---|
 | 1 | Extreme | Kubernetes pod/container logs | partial | kubernetes-prefixed-pod-log; arbitrary payload Raw |
 | 2 | Extreme | Apache Kafka broker | covered | kafka-broker-log4j |
-| 3 | Extreme | AWS VPC Flow Logs | raw | adapter needed |
+| 3 | Extreme | AWS VPC Flow Logs | covered | aws-vpc-flow-default |
 | 4 | Extreme | Cloudflare HTTP/WAF | raw | adapter needed |
 | 5 | Extreme | GCP Cloud Logging | covered | gcp-http/proto/text/json payload |
 | 6 | Extreme | Azure Monitor and Activity Logs | raw | adapter needed |

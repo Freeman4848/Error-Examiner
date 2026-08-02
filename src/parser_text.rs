@@ -1,4 +1,7 @@
-use crate::parser_schema::{LogEvent, Severity};
+use crate::{
+    parser_registry::FieldValueRule,
+    parser_schema::{LogEvent, Severity},
+};
 use regex::{Regex, RegexBuilder};
 
 pub(crate) fn whole(input: &str, level: &str) -> Vec<LogEvent> {
@@ -41,6 +44,53 @@ pub(crate) fn buildkit(input: &str) -> Vec<LogEvent> {
     (!content.is_empty())
         .then(|| event(0, lines.len(), "ERROR", content))
         .into_iter()
+        .collect()
+}
+
+pub(crate) fn delimited_lines(
+    input: &str,
+    delimiter: &str,
+    fields: &[String],
+    severity_rules: &[FieldValueRule],
+    default_severity: &str,
+) -> Vec<LogEvent> {
+    input
+        .lines()
+        .enumerate()
+        .filter_map(|(index, line)| {
+            let values: Vec<&str> = match delimiter {
+                "whitespace" => line.split_whitespace().collect(),
+                "tab" => line.split('\t').collect(),
+                "comma" => line.split(',').collect(),
+                "pipe" => line.split('|').collect(),
+                _ => return None,
+            };
+            if values.len() < fields.len() {
+                return None;
+            }
+            let severity = severity_rules
+                .iter()
+                .find(|rule| {
+                    fields
+                        .iter()
+                        .position(|field| field == &rule.field)
+                        .and_then(|position| values.get(position))
+                        .is_some_and(|value| {
+                            rule.values
+                                .iter()
+                                .any(|expected| expected.eq_ignore_ascii_case(value))
+                        })
+                })
+                .map(|rule| rule.severity.as_str())
+                .unwrap_or(default_severity);
+            let content = fields
+                .iter()
+                .zip(values)
+                .map(|(field, value)| format!("{field}={value}"))
+                .collect::<Vec<_>>()
+                .join(" ");
+            Some(event(index, index + 1, severity, content))
+        })
         .collect()
 }
 

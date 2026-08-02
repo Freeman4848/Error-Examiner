@@ -152,6 +152,18 @@ fn parse_text(format: &FormatSchema, input: &str) -> Vec<LogEvent> {
         }
         ParserSpec::WholeText { severity } => crate::parser_text::whole(input, severity),
         ParserSpec::Buildkit => crate::parser_text::buildkit(input),
+        ParserSpec::DelimitedLines {
+            delimiter,
+            fields,
+            severity_rules,
+            default_severity,
+        } => crate::parser_text::delimited_lines(
+            input,
+            delimiter,
+            fields,
+            severity_rules,
+            default_severity,
+        ),
         ParserSpec::JsonFields { .. } => Vec::new(),
     }
 }

@@ -12,3 +12,5 @@ These short synthetic fixtures exercise documented formats without copying full 
   <https://github.com/apache/kafka/blob/trunk/config/log4j2.yaml>
 - `opensearch-application.log`: OpenSearch application log layout and examples:
   <https://docs.opensearch.org/latest/install-and-configure/configuring-opensearch/logs/>
+- `aws-vpc-flow-default.log`: AWS default VPC Flow Log fields and examples:
+  <https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html>
