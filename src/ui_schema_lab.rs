@@ -8,6 +8,8 @@ pub(crate) struct SchemaUiState {
     log_name: String,
     log_raw: String,
     index_status: String,
+    existing_profile: Option<String>,
+    pub(crate) scroll_to_response: bool,
 }
 
 impl ErrorExplainerApp {
@@ -93,7 +95,9 @@ impl ErrorExplainerApp {
                 }
                 if ui
                     .add_enabled_ui(
-                        !self.schema_pending && !self.schema_ui.log_raw.is_empty(),
+                            !self.schema_pending
+                                && !self.schema_ui.log_raw.is_empty()
+                                && self.schema_ui.existing_profile.is_none(),
                         |ui| {
                             ui.add_sized(
                                 [ui.available_width(), 46.0],
@@ -110,9 +114,17 @@ impl ErrorExplainerApp {
                     )
                     .inner
                     .clicked()
-                {
-                    self.start_schema_generation(context);
-                }
+                    {
+                        self.start_schema_generation(context);
+                    }
+                    if let Some(profile) = &self.schema_ui.existing_profile {
+                        ui.colored_label(
+                            colors.assistant,
+                            format!("Already covered by {profile}; a new schema is not needed."),
+                        );
+                    } else if !self.schema_ui.log_raw.is_empty() {
+                        ui.label("After generation this page will scroll to Draft and Model response below.");
+                    }
                 ui.label(RichText::new(&self.schema_status).color(colors.muted));
                 self.schema_draft_preview(ui);
                     });
@@ -172,6 +184,9 @@ impl ErrorExplainerApp {
         match attachment::pick_input_file() {
             Ok(Some(attachment::InputFile::Log { name, text })) => {
                 let total = text.chars().count();
+                let parsed = parser_schema::parse(&text);
+                self.schema_ui.existing_profile =
+                    parsed.supported.then(|| parsed.format_ids.join(" + "));
                 self.schema_ui.log_name = name;
                 self.schema_ui.log_raw = text;
                 self.schema_draft = None;
@@ -189,7 +204,7 @@ impl ErrorExplainerApp {
     }
 
     fn start_schema_generation(&mut self, context: &egui::Context) {
-        if self.schema_ui.log_raw.is_empty() {
+        if self.schema_ui.log_raw.is_empty() || self.schema_ui.existing_profile.is_some() {
             return;
         }
         self.schema_pending = true;
@@ -235,6 +250,10 @@ impl ErrorExplainerApp {
                         RichText::new(format!("Saved: {}", draft.response_path.display())).small(),
                     );
                 });
+            if self.schema_ui.scroll_to_response {
+                ui.scroll_to_cursor(Some(egui::Align::BOTTOM));
+                self.schema_ui.scroll_to_response = false;
+            }
         }
         if install {
             self.install_schema_draft();

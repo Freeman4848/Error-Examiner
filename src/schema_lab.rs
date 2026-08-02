@@ -19,6 +19,13 @@ pub(crate) fn generate(
     name: String,
     raw: String,
 ) -> Result<SchemaDraft, String> {
+    let existing = crate::parser_schema::parse(&raw);
+    if existing.supported {
+        return Err(format!(
+            "log is already covered by {}; new schema is unnecessary",
+            existing.format_ids.join(" + ")
+        ));
+    }
     let provider = settings.provider.label().to_owned();
     let configured_model = settings.model.clone();
     settings.max_output_tokens = settings.max_output_tokens.max(2_000);
@@ -136,5 +143,17 @@ mod tests {
             extract_json("```json\n{\"a\":1}\n```").unwrap(),
             "{\"a\":1}"
         );
+    }
+
+    #[test]
+    fn refuses_to_generate_duplicate_for_known_rust_log() {
+        let error = generate(
+            ProviderSettings::default(),
+            String::new(),
+            "broken-rust.log".into(),
+            include_str!("../fixtures/broken-rust/broken-rust.log").into(),
+        )
+        .unwrap_err();
+        assert!(error.contains("already covered by cargo-rustc-error"));
     }
 }

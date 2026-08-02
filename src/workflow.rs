@@ -93,6 +93,7 @@ impl ErrorExplainerApp {
                         draft.format_ids.join(" + ")
                     );
                     self.schema_draft = Some(draft);
+                    self.schema_ui.scroll_to_response = true;
                 }
                 Err(error) => {
                     self.schema_status = format!("Draft rejected: {error}");
