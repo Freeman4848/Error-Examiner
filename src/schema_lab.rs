@@ -3,6 +3,12 @@ use std::path::PathBuf;
 
 const SAMPLE_CHARS: usize = 5_000;
 
+pub(crate) enum UpdateGate {
+    Accepted,
+    ConfirmUnknown,
+    Rejected(String),
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct SchemaDraft {
     pub(crate) json: String,
@@ -20,6 +26,7 @@ pub(crate) fn generate(
     name: String,
     raw: String,
     update_target: Option<String>,
+    unknown_update_confirmed: bool,
 ) -> Result<SchemaDraft, String> {
     let existing = crate::parser_schema::parse(&raw);
     if existing.supported && update_target.is_none() {
@@ -27,6 +34,16 @@ pub(crate) fn generate(
             "log is already covered by {}; new schema is unnecessary",
             existing.format_ids.join(" + ")
         ));
+    }
+    if let Some(target) = &update_target {
+        match update_gate(target, existing.supported, &existing.format_ids) {
+            UpdateGate::Accepted => {}
+            UpdateGate::ConfirmUnknown if unknown_update_confirmed => {}
+            UpdateGate::ConfirmUnknown => {
+                return Err("unrecognized update log was not explicitly confirmed".into())
+            }
+            UpdateGate::Rejected(error) => return Err(error),
+        }
     }
     let provider = settings.provider.label().to_owned();
     let configured_model = settings.model.clone();
@@ -77,6 +94,20 @@ pub(crate) fn generate(
         response_path,
         update_target,
     })
+}
+
+pub(crate) fn update_gate(target: &str, supported: bool, ids: &[String]) -> UpdateGate {
+    if !supported {
+        return UpdateGate::ConfirmUnknown;
+    }
+    if ids.iter().any(|id| id == target) {
+        UpdateGate::Accepted
+    } else {
+        UpdateGate::Rejected(format!(
+            "wrong update log: selected {target}, detected {}",
+            ids.join(" + ")
+        ))
+    }
 }
 
 fn save_response(
@@ -168,8 +199,16 @@ mod tests {
             "broken-rust.log".into(),
             include_str!("../fixtures/broken-rust/broken-rust.log").into(),
             None,
+            false,
         )
         .unwrap_err();
         assert!(error.contains("already covered by cargo-rustc-error"));
+    }
+
+    #[test]
+    fn blocks_a_log_owned_by_another_profile() {
+        let ids = vec!["docker-buildkit".into()];
+        let gate = update_gate("cargo-rustc-error", true, &ids);
+        assert!(matches!(gate, UpdateGate::Rejected(_)));
     }
 }

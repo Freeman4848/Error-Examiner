@@ -10,6 +10,7 @@ pub(crate) struct SchemaUiState {
     index_status: String,
     existing_profile: Option<String>,
     update_target: Option<String>,
+    update_file_confirmed: bool,
     restore_confirm: bool,
     pub(crate) scroll_to_response: bool,
 }
@@ -84,6 +85,7 @@ impl ErrorExplainerApp {
                     .clicked()
                 {
                     self.schema_ui.update_target = None;
+                    self.schema_ui.update_file_confirmed = true;
                     self.pick_schema_log();
                 }
                 if !self.schema_ui.log_name.is_empty() {
@@ -96,13 +98,26 @@ impl ErrorExplainerApp {
                     if total > 5_000 {
                         ui.label("2500 head + 2500 tail; full log stays local for validation.");
                     }
+                    if self.schema_ui.update_target.is_some()
+                        && !self.schema_ui.update_file_confirmed
+                    {
+                        ui.colored_label(
+                            colors.user,
+                            "Unknown log type: confirm it belongs to the selected profile.",
+                        );
+                        if ui.button("Confirm update log").clicked() {
+                            self.schema_ui.update_file_confirmed = true;
+                        }
+                    }
                 }
                 if ui
                     .add_enabled_ui(
                             !self.schema_pending
                                 && !self.schema_ui.log_raw.is_empty()
                                 && (self.schema_ui.existing_profile.is_none()
-                                    || self.schema_ui.update_target.is_some()),
+                                    || self.schema_ui.update_target.is_some())
+                                && (self.schema_ui.update_target.is_none()
+                                    || self.schema_ui.update_file_confirmed),
                         |ui| {
                             ui.add_sized(
                                 [ui.available_width(), 46.0],
@@ -159,6 +174,7 @@ impl ErrorExplainerApp {
                 }
                 if ui.button("Update").clicked() {
                     self.schema_ui.update_target = Some(profile.id.clone());
+                    self.schema_ui.update_file_confirmed = false;
                     self.pick_schema_log();
                 }
             }
@@ -247,6 +263,23 @@ impl ErrorExplainerApp {
             Ok(Some(attachment::InputFile::Log { name, text })) => {
                 let total = text.chars().count();
                 let parsed = parser_schema::parse(&text);
+                if let Some(target) = &self.schema_ui.update_target {
+                    match schema_lab::update_gate(target, parsed.supported, &parsed.format_ids) {
+                        schema_lab::UpdateGate::Accepted => {
+                            self.schema_ui.update_file_confirmed = true;
+                        }
+                        schema_lab::UpdateGate::ConfirmUnknown => {
+                            self.schema_ui.update_file_confirmed = false;
+                        }
+                        schema_lab::UpdateGate::Rejected(error) => {
+                            self.schema_ui.log_name.clear();
+                            self.schema_ui.log_raw.clear();
+                            self.schema_draft = None;
+                            self.schema_status = error;
+                            return;
+                        }
+                    }
+                }
                 self.schema_ui.existing_profile = (self.schema_ui.update_target.is_none()
                     && parsed.supported)
                     .then(|| parsed.format_ids.join(" + "));
@@ -280,10 +313,18 @@ impl ErrorExplainerApp {
         let name = self.schema_ui.log_name.clone();
         let raw = self.schema_ui.log_raw.clone();
         let update_target = self.schema_ui.update_target.clone();
+        let update_file_confirmed = self.schema_ui.update_file_confirmed;
         let sender = self.schema_sender.clone();
         let repaint = context.clone();
         std::thread::spawn(move || {
-            let result = schema_lab::generate(settings, api_key, name, raw, update_target);
+            let result = schema_lab::generate(
+                settings,
+                api_key,
+                name,
+                raw,
+                update_target,
+                update_file_confirmed,
+            );
             let _ = sender.send(result);
             repaint.request_repaint();
         });
