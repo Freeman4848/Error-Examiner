@@ -7,6 +7,7 @@ pub(crate) struct SchemaUiState {
     profile_preview: String,
     log_name: String,
     log_raw: String,
+    index_status: String,
 }
 
 impl ErrorExplainerApp {
@@ -36,7 +37,14 @@ impl ErrorExplainerApp {
                         self.schema_registry.built_in, self.schema_registry.user
                     ));
                     if ui.button("Reload").clicked() {
+                        let before = self.schema_registry.profiles.len();
                         self.schema_registry = parser_registry::reload_user_schemas();
+                        let after = self.schema_registry.profiles.len();
+                        self.schema_ui.index_status = if before == after {
+                            format!("Reloaded {after} · no changes")
+                        } else {
+                            format!("Reloaded {before} → {after}")
+                        };
                     }
                     if ui
                         .add_enabled(
@@ -48,6 +56,13 @@ impl ErrorExplainerApp {
                         self.preview_selected_schema();
                     }
                 });
+                if !self.schema_ui.index_status.is_empty() {
+                    ui.label(
+                        RichText::new(&self.schema_ui.index_status)
+                            .small()
+                            .color(colors.muted),
+                    );
+                }
                 self.selected_schema_preview(ui);
                 self.schema_index(ui, colors);
                 ui.separator();
@@ -63,10 +78,15 @@ impl ErrorExplainerApp {
                     self.pick_schema_log();
                 }
                 if !self.schema_ui.log_name.is_empty() {
+                    let total = self.schema_ui.log_raw.chars().count();
+                    let sent = total.min(5_000);
                     ui.horizontal(|ui| {
                         ui.label(RichText::new(&self.schema_ui.log_name).strong());
-                        ui.label(format!("{} chars", self.schema_ui.log_raw.chars().count()));
+                        ui.label(format!("AI sample {sent} / {total} chars"));
                     });
+                    if total > 5_000 {
+                        ui.label("2500 head + 2500 tail; full log stays local for validation.");
+                    }
                 }
                 if ui
                     .add_enabled(
@@ -138,10 +158,14 @@ impl ErrorExplainerApp {
     fn pick_schema_log(&mut self) {
         match attachment::pick_input_file() {
             Ok(Some(attachment::InputFile::Log { name, text })) => {
+                let total = text.chars().count();
                 self.schema_ui.log_name = name;
                 self.schema_ui.log_raw = text;
                 self.schema_draft = None;
-                self.schema_status = "Log loaded locally; ready to generate.".into();
+                self.schema_status = format!(
+                    "Log loaded: AI receives {} / {total} chars; full validation is local.",
+                    total.min(5_000)
+                );
             }
             Ok(Some(attachment::InputFile::Image(_))) => {
                 self.schema_status = "Schema generation accepts text logs, not images.".into();
