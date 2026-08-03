@@ -4,7 +4,7 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")" && pwd)"
 cd "$root"
 
-cargo build --release --bin error-examiner
+cargo build --release --bin error-examiner -j 2
 package="dist/Error-Examiner-Linux-x86_64"
 install -d "$package"
 install -m 755 target/release/error-examiner "$package/"
