@@ -21,14 +21,19 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force package
           Copy-Item target/release/error-examiner.exe package/Error-Examiner.exe
-          Copy-Item "Create Desktop Shortcut.cmd",README.md,LICENSE package/
+          Copy-Item "Create Desktop Shortcut.cmd",LICENSE package/
+          Copy-Item release/README.md package/README.md
           $hash = (Get-FileHash package/Error-Examiner.exe -Algorithm SHA256).Hash
           "$hash  Error-Examiner.exe" | Set-Content package/SHA256SUMS.txt
           Compress-Archive package/* Error-Examiner-Windows-x86_64.zip
+          $zipHash = (Get-FileHash Error-Examiner-Windows-x86_64.zip -Algorithm SHA256).Hash
+          "$zipHash  Error-Examiner-Windows-x86_64.zip" | Set-Content Error-Examiner-Windows-x86_64.zip.sha256
       - uses: actions/upload-artifact@v4
         with:
           name: Error-Examiner-Windows-x86_64
-          path: Error-Examiner-Windows-x86_64.zip
+          path: |
+            Error-Examiner-Windows-x86_64.zip
+            Error-Examiner-Windows-x86_64.zip.sha256
 
   linux:
     runs-on: ubuntu-24.04

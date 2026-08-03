@@ -1,110 +1,123 @@
 # Error Examiner
 
-Semantic log preprocessing for humans and AI models.
+**Semantic log preprocessing and AI-assisted error triage**
 
-Local tray application that sends logs, stack traces, and debugging questions
-to an AI provider and returns a testable explanation.
+Error Examiner is a local tray application for logs, stack traces, compiler
+output, and debugging questions. It removes repeated noise, preserves useful
+diagnostic evidence, and sends bounded requests to the AI provider you choose.
 
-Bug reports: `freeman4848.dev@gmail.com`
+## Download
 
-## Features
+<p align="center">
+  <a href="https://github.com/Freeman4848/Error-Examiner/releases/download/v0.1.0/Error-Examiner-Windows-x86_64.zip">
+    <img src="assets/download-windows.svg" width="900" alt="Download Error Examiner for Windows">
+  </a>
+</p>
 
-- `Ctrl+Shift+Alt+C` shows or hides the window and pastes the clipboard when
-  the input is empty.
-- Local chat history with an explicit Clear action.
-- Named chat tabs, timestamps, file preview, and image attachments.
-- Optional log preparation with format-aware parsing, deduplication, redaction,
-  token estimates, safe batching, and Raw fallback.
-- API keys stay only in process memory and disappear on restart.
-- Hard input/output limits, timeout, optional retries, token estimate, and
-  user-supplied cost rates.
-- Providers:
-  - OpenAI Responses API with `store: false`
-  - OpenAI-compatible APIs
-  - Cerebras
-  - LM Studio native REST API at `http://localhost:1234`
-  - Google Gemini
-  - Anthropic
-  - Custom AI API using OpenAI-, Gemini-, or Anthropic-compatible protocols
-  - offline Demo mode
-- Tray integrated into the same executable on Windows and Linux.
-- Executable parser schema with 57 formats, 83 verified cases, and Raw fallback.
-- Raw/Parsed size comparison sends the smaller representation to the model.
-- Settings and About & Help views.
+<p align="center">
+  <a href="https://github.com/Freeman4848/Error-Examiner/releases/download/v0.1.0/Error-Examiner-Linux-x86_64.tar.gz">
+    <img src="assets/download-linux.svg" width="900" alt="Download Error Examiner for Linux">
+  </a>
+</p>
+
+**Windows 10/11 x86_64 and Linux x86_64 · v0.1.0**
 
 ## Screenshots
 
+### Chat and prepared-log workflow
+
 ![Chat](screenshots/chat.png)
+
+### Provider and privacy settings
 
 ![Settings](screenshots/settings.png)
 
+### Built-in help
+
 ![About and Help](screenshots/about-help.png)
 
-## Run locally
+## Features
 
-Linux:
+- Raw/Parsed comparison sends the smaller safe representation.
+- Format-aware parsing, deduplication, redaction, token estimates, and batching.
+- 57 parser formats with Raw fallback for unknown input.
+- OpenAI, Cerebras, LM Studio, Gemini, Anthropic, and custom compatible APIs.
+- Local named chat tabs, timestamps, file previews, and image attachments.
+- One process owns the resizable window and tray icon.
+- `Ctrl+Shift+Alt+C` shows or hides the window and pastes the clipboard.
+- API keys remain in process memory and disappear when the application exits.
+
+## Quick Start
+
+### Windows 10/11 x64
+
+1. Download and extract `Error-Examiner-Windows-x86_64.zip`.
+2. Run `Error-Examiner.exe`.
+3. Optionally run `Create Desktop Shortcut.cmd`.
+
+No installer is required.
+
+### Linux x86_64
+
+1. Extract `Error-Examiner-Linux-x86_64.tar.gz`.
+2. Run `error-examiner` directly or install its menu entry:
 
 ```bash
-cargo run --bin error-examiner
+tar -xzf Error-Examiner-Linux-x86_64.tar.gz
+cd Error-Examiner-Linux-x86_64
+./error-examiner
 ```
 
-Build and test:
+Optional local installation:
 
 ```bash
-cargo test
-cargo build --release --bin error-examiner
+bash install-linux.sh
 ```
 
-Windows:
+The tray requires StatusNotifier/AppIndicator support.
 
-```powershell
-cargo run --release --bin error-examiner
-```
+## Provider Setup
 
-One executable owns both the window and tray icon on Windows and Linux.
+Open **Settings**, select a provider, enter its current model ID and API key
+when required, then use **Test connection**. LM Studio uses its local REST API
+at `http://localhost:1234`; leave Model empty to detect the loaded model.
 
-## MCP server (development)
+## Log Preparation
 
-`error-examiner-mcp` is a separate local stdio binary using the same parser as the GUI. It
-accepts a bounded file path or inline text and supports `auto`, `raw`, `parsed`, and `compare`;
-see [docs/mcp-contract.md](docs/mcp-contract.md). MCP packaging follows stress tests.
+Use **Add log or image** to attach input. Before sending, Error Examiner can
+identify the format, redact common secrets, remove duplicates, preserve error
+events, split large input into batches, and preview Raw versus Parsed output.
+If parsing is unknown or increases size, Raw is retained.
 
-## Provider setup
+## Privacy and Safety
 
-Open Settings, select a provider, enter its current model ID and API key, then
-use Test connection. Provider/model/base URL and limits are saved; the API key
-is not.
-
-LM Studio requires its local server on port `1234`. Select `LM Studio
-(local)`; leave Model empty to auto-detect a loaded local LLM. No key is
-required unless authentication was enabled in LM Studio.
-
-OpenAI-compatible supports services such as OpenRouter, Groq, Together,
-Mistral, or a custom gateway by changing Base URL and Model.
-
-Use **Add log or image** to attach a file. Prepared logs can be inspected in
-Raw, Parsed, or Compare mode before sending.
-
-## Privacy
-
-- Submitted text is sent only after pressing Explain.
-- The selected provider receives the bounded conversation included in the
-  request.
-- API keys are kept in RAM and are never written to settings, history, logs,
-  screenshots, or exports.
-- Chat history is stored locally in the platform configuration directory.
-- Pasted text and attached screenshots become part of local chat history.
-- Logs can contain secrets or personal data; review them before submission.
+- Nothing is submitted until you press **Explain**.
+- Only the selected provider receives the bounded conversation.
+- API keys are never saved to settings, history, logs, screenshots, or exports.
+- Chat history is stored locally and can be cleared from the application.
+- Logs may contain secrets; inspect previews before sending.
 - Model conclusions are hypotheses and must be verified.
 
-## Limits and billing
+## MCP Development Preview
 
-The default budget is approximately 8,000 input tokens (24,000 characters)
-and 1,500 output tokens. Automatic retries are disabled by default because an
-ambiguous timeout can still have consumed tokens. Cost is displayed only when
-the user enters current per-million-token prices.
+The repository contains a local stdio MCP server using the same parser. It
+supports bounded `path` or inline `text` input and `auto`, `raw`, `parsed`, and
+`compare` modes. MCP packaging follows the dedicated agent stress test; see
+[`docs/mcp-contract.md`](docs/mcp-contract.md).
+
+## Build from Source
+
+```bash
+cargo test -j 2
+cargo build --release --bin error-examiner -j 2
+```
+
+Windows release builds use the MSVC target on `windows-latest`. Linux requires
+the GTK/AppIndicator development libraries listed in the build workflow.
+
+Bug reports: `freeman4848.dev@gmail.com`
 
 ## License
 
-MIT. The bundled Noto Sans font retains its upstream license in
-`third_party/Noto-Sans-COPYRIGHT`.
+MIT. See [`LICENSE`](LICENSE). Bundled Noto Sans files retain their upstream
+license in `third_party/Noto-Sans-COPYRIGHT`.
