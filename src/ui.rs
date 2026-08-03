@@ -325,7 +325,10 @@ impl ErrorExaminerApp {
 
     pub(crate) fn about_help_ui(&mut self, context: &egui::Context) {
         egui::CentralPanel::default().show(context, |ui| {
-            ScrollArea::vertical().show(ui, |ui| {
+            ScrollArea::vertical()
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                ui.set_min_width(ui.available_width());
                 ui.heading("Error Examiner");
                 ui.label("Local AI-assisted incident triage for logs, stack traces, and debugging questions.");
                 let renderer = if self.pending {
@@ -357,7 +360,7 @@ impl ErrorExaminerApp {
                 ui.label("freeman4848.dev@gmail.com");
                 ui.add_space(12.0);
                 ui.label("Version 0.1.0 · Rust + egui/eframe");
-            });
+                });
         });
     }
 }
