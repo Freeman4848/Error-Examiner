@@ -1,7 +1,9 @@
-# Error Explainer
+# Error Examiner
 
 Local tray application that sends logs, stack traces, and debugging questions
 to an AI provider and returns a testable explanation.
+
+Bug reports: `freeman4848.dev@gmail.com`
 
 ## Features
 
@@ -41,20 +43,20 @@ to an AI provider and returns a testable explanation.
 Linux:
 
 ```bash
-cargo run --bin error-explainer
+cargo run --bin error-examiner
 ```
 
 Build and test:
 
 ```bash
 cargo test
-cargo build --release --bin error-explainer
+cargo build --release --bin error-examiner
 ```
 
 Windows:
 
 ```powershell
-cargo run --release --bin error-explainer
+cargo run --release --bin error-examiner
 ```
 
 One executable owns both the window and tray icon on Windows and Linux.

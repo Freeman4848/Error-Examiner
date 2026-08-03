@@ -1,6 +1,6 @@
 use crate::*;
 
-pub(crate) fn custom_protocol_picker(app: &mut ErrorExplainerApp, ui: &mut egui::Ui) {
+pub(crate) fn custom_protocol_picker(app: &mut ErrorExaminerApp, ui: &mut egui::Ui) {
     if app.settings.provider != ProviderKind::CustomApi {
         return;
     }
@@ -23,11 +23,7 @@ pub(crate) fn custom_protocol_picker(app: &mut ErrorExplainerApp, ui: &mut egui:
     ui.label("Enter the provider's API root URL and exact model ID.");
 }
 
-pub(crate) fn model_picker(
-    app: &mut ErrorExplainerApp,
-    ui: &mut egui::Ui,
-    context: &egui::Context,
-) {
+pub(crate) fn model_picker(app: &mut ErrorExaminerApp, ui: &mut egui::Ui, context: &egui::Context) {
     ui.label("Model");
     if app.available_models.is_empty() {
         ui.add_sized(

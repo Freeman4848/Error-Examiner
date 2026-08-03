@@ -3,9 +3,9 @@ fn main() {
     {
         let mut resource = winresource::WindowsResource::new();
         resource.set_icon("assets/app-icon.ico");
-        resource.set("ProductName", "Error Explainer");
-        resource.set("FileDescription", "Local AI error and incident explainer");
-        resource.set("OriginalFilename", "Error-Explainer.exe");
+        resource.set("ProductName", "Error Examiner");
+        resource.set("FileDescription", "Local AI error and incident examiner");
+        resource.set("OriginalFilename", "Error-Examiner.exe");
         resource
             .compile()
             .expect("Windows resources should compile");

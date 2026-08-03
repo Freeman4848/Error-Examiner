@@ -14,7 +14,7 @@ pub(crate) enum PreviewPane {
     Parsed,
 }
 
-impl ErrorExplainerApp {
+impl ErrorExaminerApp {
     pub(crate) fn log_preview_window(&mut self, context: &egui::Context) {
         if !self.preview_open {
             return;

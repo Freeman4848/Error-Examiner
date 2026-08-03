@@ -9,8 +9,13 @@ pub fn app_dir() -> PathBuf {
         .map(PathBuf::from)
         .or_else(|| env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")));
 
-    base.unwrap_or_else(|| PathBuf::from("."))
-        .join("error-explainer")
+    let base = base.unwrap_or_else(|| PathBuf::from("."));
+    let current = base.join("error-examiner");
+    let legacy = base.join("error-explainer");
+    if !current.exists() && legacy.exists() && fs::rename(&legacy, &current).is_err() {
+        return legacy;
+    }
+    current
 }
 
 pub fn load_json<T: DeserializeOwned + Default>(name: &str) -> T {

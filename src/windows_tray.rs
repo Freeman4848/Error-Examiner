@@ -15,7 +15,7 @@ pub struct WindowsTray {
 impl WindowsTray {
     pub fn new() -> Result<Self, String> {
         let menu = Menu::new();
-        let open = MenuItem::new("Open Error Explainer", true, None);
+        let open = MenuItem::new("Open Error Examiner", true, None);
         let settings = MenuItem::new("Settings", true, None);
         let help = MenuItem::new("About & Help", true, None);
         let exit = MenuItem::new("Exit", true, None);
@@ -28,7 +28,7 @@ impl WindowsTray {
         let exit_id = exit.id().clone();
         let tray = TrayIconBuilder::new()
             .with_menu(Box::new(menu))
-            .with_tooltip("Error Explainer")
+            .with_tooltip("Error Examiner")
             .with_icon(load_icon()?)
             .build()
             .map_err(|error| error.to_string())?;

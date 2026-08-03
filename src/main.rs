@@ -45,7 +45,7 @@ use theme::{
 };
 use ui::{first_line, format_usage, keep_tail};
 
-const APP_NAME: &str = "Error Explainer";
+const APP_NAME: &str = "Error Examiner";
 const HOTKEY_LABEL: &str = "Ctrl+Shift+Alt+C";
 
 fn main() -> eframe::Result<()> {
@@ -82,7 +82,7 @@ fn main() -> eframe::Result<()> {
         APP_NAME,
         options,
         Box::new(move |creation_context| {
-            Box::new(ErrorExplainerApp::new(
+            Box::new(ErrorExaminerApp::new(
                 creation_context,
                 command_server,
                 start_hidden,
@@ -136,7 +136,7 @@ struct WorkerResult {
     result: Result<AiAnswer, String>,
 }
 
-struct ErrorExplainerApp {
+struct ErrorExaminerApp {
     page: Page,
     input: String,
     attachment: Option<ai::ImageAttachment>,
@@ -191,7 +191,7 @@ struct ErrorExplainerApp {
     shortcuts: linux_hotkey::Shortcuts,
 }
 
-impl ErrorExplainerApp {
+impl ErrorExaminerApp {
     fn new(
         creation_context: &eframe::CreationContext<'_>,
         command_server: command::CommandServer,
@@ -386,7 +386,7 @@ impl ErrorExplainerApp {
     }
 }
 
-impl eframe::App for ErrorExplainerApp {
+impl eframe::App for ErrorExaminerApp {
     fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
         palette(self.theme, self.opacity)
             .background

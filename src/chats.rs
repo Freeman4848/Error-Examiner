@@ -13,7 +13,7 @@ pub(crate) struct ChatTab {
     pub(crate) messages: Vec<ChatMessage>,
 }
 
-impl ErrorExplainerApp {
+impl ErrorExaminerApp {
     fn sync_active_chat(&mut self) {
         if let Some(tab) = self.chat_tabs.get_mut(self.active_chat) {
             tab.input = self.input.clone();

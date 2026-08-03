@@ -1,7 +1,7 @@
 use crate::theme::palette;
 use crate::*;
 
-impl ErrorExplainerApp {
+impl ErrorExaminerApp {
     pub(crate) fn chat_ui(&mut self, context: &egui::Context) {
         let colors = palette(self.theme, self.opacity);
         egui::TopBottomPanel::bottom("chat_input")
@@ -326,7 +326,7 @@ impl ErrorExplainerApp {
     pub(crate) fn about_help_ui(&mut self, context: &egui::Context) {
         egui::CentralPanel::default().show(context, |ui| {
             ScrollArea::vertical().show(ui, |ui| {
-                ui.heading("Error Explainer");
+                ui.heading("Error Examiner");
                 ui.label("Local AI-assisted incident triage for logs, stack traces, and debugging questions.");
                 let renderer = if self.pending {
                     format!("active {:.0} FPS", self.active_fps)
@@ -352,6 +352,9 @@ impl ErrorExplainerApp {
                 ui.add_space(12.0);
                 ui.heading("Safety");
                 ui.label("Model output is a hypothesis, not proof. Confirm against source code, runtime state, and reproduction steps.");
+                ui.add_space(12.0);
+                ui.heading("Bug reports");
+                ui.label("freeman4848.dev@gmail.com");
                 ui.add_space(12.0);
                 ui.label("Version 0.1.0 · Rust + egui/eframe");
             });

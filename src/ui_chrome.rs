@@ -1,7 +1,7 @@
 use crate::theme::palette;
 use crate::*;
 
-impl ErrorExplainerApp {
+impl ErrorExaminerApp {
     pub(crate) fn top_bar(&mut self, context: &egui::Context) {
         let colors = palette(self.theme, self.opacity);
         egui::TopBottomPanel::top("window_chrome")
@@ -23,16 +23,16 @@ impl ErrorExplainerApp {
                         )
                         .sense(egui::Sense::click_and_drag()),
                     );
-                    let explainer = ui.add(
+                    let examiner = ui.add(
                         egui::Label::new(
-                            RichText::new("Explainer")
+                            RichText::new("Examiner")
                                 .strong()
                                 .size(15.0)
                                 .color(colors.assistant),
                         )
                         .sense(egui::Sense::click_and_drag()),
                     );
-                    if (error.drag_started() || explainer.drag_started()) && !self.window_locked {
+                    if (error.drag_started() || examiner.drag_started()) && !self.window_locked {
                         context.send_viewport_cmd(egui::ViewportCommand::StartDrag);
                     }
                     let icon_rect = egui::Rect::from_center_size(

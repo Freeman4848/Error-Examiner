@@ -1,8 +1,8 @@
 [package]
-name = "error-explainer"
+name = "error-examiner"
 version = "0.1.0"
 edition = "2021"
-description = "Local AI error and incident explainer"
+description = "Local AI error and incident examiner"
 license = "MIT"
 build = "build.rs"
 
@@ -27,14 +27,14 @@ x11rb = "0.13"
 tray-icon = "0.24.1"
 
 [[bin]]
-name = "error-explainer"
+name = "error-examiner"
 path = "src/main.rs"
 
 [build-dependencies]
 winresource = "0.1.31"
 
 [package.metadata.winresource]
-ProductName = "Error Explainer"
-FileDescription = "Local AI error and incident explainer"
-OriginalFilename = "Error-Explainer.exe"
+ProductName = "Error Examiner"
+FileDescription = "Local AI error and incident examiner"
+OriginalFilename = "Error-Examiner.exe"
 LegalCopyright = "Copyright 2026 Andy and contributors"

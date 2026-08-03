@@ -1,6 +1,6 @@
 use crate::*;
 
-impl ErrorExplainerApp {
+impl ErrorExaminerApp {
     pub(crate) fn load_file(&mut self) {
         match attachment::pick_input_file() {
             Ok(Some(attachment::InputFile::Image(image))) => {

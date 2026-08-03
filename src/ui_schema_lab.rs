@@ -15,7 +15,7 @@ pub(crate) struct SchemaUiState {
     pub(crate) scroll_to_response: bool,
 }
 
-impl ErrorExplainerApp {
+impl ErrorExaminerApp {
     pub(crate) fn schema_lab_ui(&mut self, context: &egui::Context) {
         let colors = palette(self.theme, self.opacity);
         egui::CentralPanel::default()

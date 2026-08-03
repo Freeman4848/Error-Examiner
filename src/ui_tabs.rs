@@ -1,6 +1,6 @@
 use crate::*;
 
-impl ErrorExplainerApp {
+impl ErrorExaminerApp {
     pub(crate) fn chat_tabs_ui(&mut self, ui: &mut egui::Ui) {
         let tabs: Vec<(usize, String)> = self
             .chat_tabs

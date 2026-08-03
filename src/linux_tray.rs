@@ -5,11 +5,11 @@ pub struct LinuxTray;
 
 impl ksni::Tray for LinuxTray {
     fn id(&self) -> String {
-        "error_explainer".into()
+        "error_examiner".into()
     }
 
     fn title(&self) -> String {
-        "Error Explainer".into()
+        "Error Examiner".into()
     }
 
     fn icon_name(&self) -> String {
@@ -28,7 +28,7 @@ impl ksni::Tray for LinuxTray {
         use ksni::menu::*;
         vec![
             StandardItem {
-                label: "Open Error Explainer".into(),
+                label: "Open Error Examiner".into(),
                 icon_name: "system-run".into(),
                 activate: Box::new(|_| {
                     let _ = command::send(UiCommand::Open);

@@ -1,4 +1,4 @@
-# Error Explainer MCP contract
+# Error Examiner MCP contract
 
 The MCP server exposes `prepare_error_log`; the client model decides whether to call it.
 
