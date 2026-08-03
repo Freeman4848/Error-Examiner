@@ -1342,6 +1342,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tray-icon",
+ "windows-sys 0.59.0",
  "winresource",
  "x11rb",
 ]

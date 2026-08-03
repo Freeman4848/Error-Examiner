@@ -3,6 +3,9 @@ use tray_icon::{
     menu::{Menu, MenuEvent, MenuItem},
     Icon, TrayIcon, TrayIconBuilder,
 };
+use windows_sys::Win32::UI::WindowsAndMessaging::{
+    FindWindowW, SW_RESTORE, SetForegroundWindow, ShowWindow,
+};
 
 use crate::command::UiCommand;
 
@@ -49,6 +52,7 @@ impl WindowsTray {
                 } else {
                     continue;
                 };
+                restore_window(!matches!(command, UiCommand::Exit));
                 if sender.send(command).is_err() {
                     break;
                 }
@@ -75,6 +79,20 @@ impl WindowsTray {
 
     pub fn poll(&self) -> Option<UiCommand> {
         self.actions.try_recv().ok()
+    }
+}
+
+fn restore_window(focus: bool) {
+    let title: Vec<u16> = crate::APP_NAME.encode_utf16().chain(Some(0)).collect();
+    unsafe {
+        let window = FindWindowW(std::ptr::null(), title.as_ptr());
+        if window.is_null() {
+            return;
+        }
+        ShowWindow(window, SW_RESTORE);
+        if focus {
+            SetForegroundWindow(window);
+        }
     }
 }
 
