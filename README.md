@@ -1,5 +1,7 @@
 # Error Examiner
 
+Semantic log preprocessing for humans and AI models.
+
 Local tray application that sends logs, stack traces, and debugging questions
 to an AI provider and returns a testable explanation.
 
@@ -60,6 +62,12 @@ cargo run --release --bin error-examiner
 ```
 
 One executable owns both the window and tray icon on Windows and Linux.
+
+## MCP server (development)
+
+`error-examiner-mcp` is a separate local stdio binary using the same parser as the GUI. It
+accepts a bounded file path or inline text and supports `auto`, `raw`, `parsed`, and `compare`;
+see [docs/mcp-contract.md](docs/mcp-contract.md). MCP packaging follows stress tests.
 
 ## Provider setup
 

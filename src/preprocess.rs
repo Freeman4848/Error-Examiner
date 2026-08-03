@@ -141,6 +141,10 @@ fn normalize_newlines(input: &str) -> String {
         .join("\n")
 }
 
+pub(crate) fn sanitized_raw(input: &str) -> String {
+    normalize_newlines(input)
+}
+
 fn redact_line(line: &str) -> String {
     let mut result = line.to_owned();
     for marker in ["Bearer ", "api_key=", "apikey=", "password=", "token="] {
