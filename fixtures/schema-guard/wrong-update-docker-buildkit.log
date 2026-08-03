@@ -1,0 +1,11 @@
+#1 [internal] load build definition from Dockerfile
+#1 DONE 0.0s
+#2 [2/2] RUN apt-get update && apt-get install -y missing-package
+#2 2.18 E: Unable to locate package missing-package
+#2 ERROR: process /bin/sh -c apt-get update && apt-get install -y missing-package did not complete successfully: exit code: 100
+------
+Dockerfile:3
+--------------------
+  3 | >>> RUN apt-get update && apt-get install -y missing-package
+--------------------
+ERROR: failed to solve: process /bin/sh -c apt-get update did not complete successfully: exit code: 100
