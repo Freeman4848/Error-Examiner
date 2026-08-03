@@ -186,7 +186,7 @@ struct ErrorExaminerApp {
     #[cfg(target_os = "windows")]
     tray: Option<windows_tray::WindowsTray>,
     #[cfg(target_os = "linux")]
-    _tray: Option<ksni::blocking::Handle<linux_tray::LinuxTray>>,
+    tray: Option<ksni::blocking::Handle<linux_tray::LinuxTray>>,
     #[cfg(target_os = "linux")]
     shortcuts: linux_hotkey::Shortcuts,
 }
@@ -287,7 +287,7 @@ impl ErrorExaminerApp {
             #[cfg(target_os = "windows")]
             tray,
             #[cfg(target_os = "linux")]
-            _tray: tray,
+            tray,
             #[cfg(target_os = "linux")]
             shortcuts: linux_hotkey::Shortcuts::new(),
         };
@@ -316,7 +316,10 @@ impl ErrorExaminerApp {
                 self.page = Page::AboutHelp;
                 self.show(context);
             }
-            UiCommand::Exit => context.send_viewport_cmd(egui::ViewportCommand::Close),
+            UiCommand::Exit => {
+                self.shutdown_tray();
+                context.send_viewport_cmd(egui::ViewportCommand::Close);
+            }
             UiCommand::Ping => {}
         }
     }
@@ -336,6 +339,15 @@ impl ErrorExaminerApp {
     fn hide(&mut self, context: &egui::Context) {
         self.is_hidden = true;
         context.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+    }
+
+    fn shutdown_tray(&mut self) {
+        #[cfg(target_os = "windows")]
+        drop(self.tray.take());
+        #[cfg(target_os = "linux")]
+        if let Some(tray) = self.tray.take() {
+            tray.shutdown().wait();
+        }
     }
 
     fn paste_clipboard(&mut self) {
@@ -383,6 +395,12 @@ impl ErrorExaminerApp {
                 self.saved_window = current;
             }
         }
+    }
+}
+
+impl Drop for ErrorExaminerApp {
+    fn drop(&mut self) {
+        self.shutdown_tray();
     }
 }
 

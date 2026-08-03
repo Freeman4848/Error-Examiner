@@ -19,7 +19,7 @@ pub(crate) struct PreparedLog {
 }
 
 pub(crate) fn prepare(name: String, input: &str, batch_chars: usize) -> PreparedLog {
-    let clean = normalize_newlines(input);
+    let clean = sanitized_raw(input);
     let ParseOutcome {
         format_ids,
         events,
@@ -79,7 +79,7 @@ pub(crate) fn prepare_raw(
             "Raw log has {size} characters but the current limit is {character_budget}. Raise the limit or enable normalization."
         ));
     }
-    let clean = normalize_newlines(&input);
+    let clean = sanitized_raw(&input);
     let parsed = crate::parser_schema::parse(&clean);
     let parsed_preview = if parsed.supported {
         render_events(&deduplicate(parsed.events).0)
