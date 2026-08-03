@@ -1,4 +1,4 @@
-    Checking broken-log-normalizer v0.1.0 (/home/andy/___freelanc_try_work___/__01_demo_upwork/Error-Explainer/fixtures/broken-rust)
+    Checking broken-log-normalizer v0.1.0 (/home/andy/___freelanc_try_work___/__01_demo_upwork/Error-Examiner/fixtures/broken-rust)
 error[E0308]: mismatched types
  --> src/main.rs:8:21
   |

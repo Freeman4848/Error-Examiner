@@ -11,6 +11,7 @@ pub fn app_dir() -> PathBuf {
 
     let base = base.unwrap_or_else(|| PathBuf::from("."));
     let current = base.join("error-examiner");
+    // Keep the former directory name so existing users retain their settings.
     let legacy = base.join("error-explainer");
     if !current.exists() && legacy.exists() && fs::rename(&legacy, &current).is_err() {
         return legacy;
