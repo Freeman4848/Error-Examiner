@@ -2,9 +2,12 @@ use std::{
     io::{Read, Write},
     net::{TcpListener, TcpStream},
     sync::{mpsc, Arc, Mutex},
+    time::Duration,
 };
 
 const COMMAND_ADDRESS: &str = "127.0.0.1:47661";
+const COMMAND_LIMIT: u64 = 32;
+const COMMAND_TIMEOUT: Duration = Duration::from_secs(1);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UiCommand {
@@ -62,11 +65,16 @@ pub fn start_server() -> Result<CommandServer, String> {
     let thread_context = Arc::clone(&wake_context);
     std::thread::spawn(move || {
         for stream in listener.incoming() {
-            let Ok(mut stream) = stream else {
+            let Ok(stream) = stream else {
                 continue;
             };
+            let _ = stream.set_read_timeout(Some(COMMAND_TIMEOUT));
             let mut command = String::new();
-            if stream.read_to_string(&mut command).is_ok() {
+            if stream
+                .take(COMMAND_LIMIT)
+                .read_to_string(&mut command)
+                .is_ok()
+            {
                 if let Some(command) = UiCommand::parse(&command) {
                     let _ = sender.send(command);
                     if let Ok(context) = thread_context.lock() {
@@ -89,4 +97,16 @@ pub fn send(command: UiCommand) -> Result<(), String> {
     stream
         .write_all(command.wire_name().as_bytes())
         .map_err(|error| error.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn accepts_only_exact_bounded_commands() {
+        assert_eq!(UiCommand::parse("open\n"), Some(UiCommand::Open));
+        assert_eq!(UiCommand::parse("open extra"), None);
+        assert!(COMMAND_LIMIT >= UiCommand::Settings.wire_name().len() as u64);
+    }
 }
