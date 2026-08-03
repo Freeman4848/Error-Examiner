@@ -1,4 +1,7 @@
-#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+#![cfg_attr(
+    all(target_os = "windows", not(debug_assertions)),
+    windows_subsystem = "windows"
+)]
 
 mod ai;
 mod attachment;
@@ -316,10 +319,7 @@ impl ErrorExaminerApp {
                 self.page = Page::AboutHelp;
                 self.show(context);
             }
-            UiCommand::Exit => {
-                self.shutdown_tray();
-                context.send_viewport_cmd(egui::ViewportCommand::Close);
-            }
+            UiCommand::Exit => self.exit_application(context),
             UiCommand::Ping => {}
         }
     }
@@ -348,6 +348,19 @@ impl ErrorExaminerApp {
         if let Some(tray) = self.tray.take() {
             tray.shutdown().wait();
         }
+    }
+
+    fn exit_application(&mut self, context: &egui::Context) {
+        self.save_history();
+        self.persist_window(context);
+        self.shutdown_tray();
+        #[cfg(target_os = "windows")]
+        {
+            std::thread::sleep(Duration::from_millis(150));
+            std::process::exit(0);
+        }
+        #[cfg(not(target_os = "windows"))]
+        context.send_viewport_cmd(egui::ViewportCommand::Close);
     }
 
     fn paste_clipboard(&mut self) {
@@ -412,6 +425,11 @@ impl eframe::App for ErrorExaminerApp {
     }
 
     fn update(&mut self, context: &egui::Context, _frame: &mut eframe::Frame) {
+        #[cfg(target_os = "windows")]
+        if context.input(|input| input.viewport().close_requested()) {
+            context.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            self.hide(context);
+        }
         #[cfg(target_os = "linux")]
         self.shortcuts.apply(context);
         if self.pending {
