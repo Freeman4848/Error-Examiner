@@ -36,10 +36,6 @@ diagnostic evidence, and sends bounded requests to the AI provider you choose.
 
 ![Settings](screenshots/settings.png)
 
-### Built-in help
-
-![About and Help](screenshots/about-help.png)
-
 ## Features
 
 - Raw/Parsed comparison sends the smaller safe representation.
