@@ -13,6 +13,15 @@ impl ErrorExaminerApp {
                     .stroke(egui::Stroke::new(0.5, colors.border)),
             )
             .show(context, |ui| {
+                let drag_rect = egui::Rect::from_min_size(
+                    ui.cursor().min,
+                    egui::vec2(ui.available_width(), 34.0),
+                );
+                let header_drag = ui.interact(
+                    drag_rect,
+                    ui.id().with("window_header_drag"),
+                    egui::Sense::click_and_drag(),
+                );
                 ui.horizontal(|ui| {
                     let error = ui.add(
                         egui::Label::new(
@@ -32,7 +41,11 @@ impl ErrorExaminerApp {
                         )
                         .sense(egui::Sense::click_and_drag()),
                     );
-                    if (error.drag_started() || examiner.drag_started()) && !self.window_locked {
+                    if (header_drag.drag_started()
+                        || error.drag_started()
+                        || examiner.drag_started())
+                        && !self.window_locked
+                    {
                         context.send_viewport_cmd(egui::ViewportCommand::StartDrag);
                     }
                     let icon_rect = egui::Rect::from_center_size(
