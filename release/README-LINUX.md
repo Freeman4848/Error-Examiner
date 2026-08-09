@@ -26,10 +26,6 @@ required, then use **Test connection**. API keys are kept only in memory.
 Use **Add log or image**, review the Raw/Parsed preview, then press **Explain**.
 Unknown formats safely fall back to Raw.
 
-The Cerebras connection has been smoke-tested. OpenAI, LM Studio, Gemini,
-Anthropic, and custom compatible adapters are included but are not yet verified
-in this release; use **Test connection** before submitting a log.
-
 ## Integrity
 
 Verify the binary from the extracted directory:
