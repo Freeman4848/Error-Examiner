@@ -9,18 +9,12 @@ diagnostic evidence, and sends bounded requests to the AI provider you choose.
 ## Download
 
 <p align="center">
-  <a href="https://github.com/Freeman4848/Error-Examiner/releases/download/v0.1.0/Error-Examiner-Windows-x86_64.zip">
-    <img src="assets/download-windows.svg" width="900" alt="Download Error Examiner for Windows">
-  </a>
-</p>
-
-<p align="center">
   <a href="https://github.com/Freeman4848/Error-Examiner/releases/download/v0.1.0/Error-Examiner-Linux-x86_64.tar.gz">
     <img src="assets/download-linux.svg" width="900" alt="Download Error Examiner for Linux">
   </a>
 </p>
 
-**Windows 10/11 x86_64 and Linux x86_64 · v0.1.0**
+**Linux x86_64 · v0.1.0**
 
 ## Screenshots
 
@@ -48,14 +42,6 @@ diagnostic evidence, and sends bounded requests to the AI provider you choose.
 - API keys remain in process memory and disappear when the application exits.
 
 ## Quick Start
-
-### Windows 10/11 x64
-
-1. Download and extract `Error-Examiner-Windows-x86_64.zip`.
-2. Run `Error-Examiner.exe`.
-3. Optionally run `Create Desktop Shortcut.cmd`.
-
-No installer is required.
 
 ### Linux x86_64
 
@@ -112,8 +98,8 @@ cargo test -j 2
 cargo build --release --bin error-examiner -j 2
 ```
 
-Windows release builds use the MSVC target on `windows-latest`. Linux requires
-the GTK/AppIndicator development libraries listed in the build workflow.
+Linux requires the GTK/AppIndicator development libraries listed in the build
+workflow.
 
 Bug reports: `freeman4848.dev@gmail.com`
 
