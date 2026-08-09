@@ -17,37 +17,19 @@ impl ErrorExaminerApp {
                     ui.cursor().min,
                     egui::vec2(ui.available_width(), 34.0),
                 );
-                let header_drag = ui.interact(
-                    drag_rect,
-                    ui.id().with("window_header_drag"),
-                    egui::Sense::click_and_drag(),
-                );
                 ui.horizontal(|ui| {
-                    let error = ui.add(
-                        egui::Label::new(
-                            RichText::new("Error")
-                                .strong()
-                                .size(15.0)
-                                .color(colors.user),
-                        )
-                        .sense(egui::Sense::click_and_drag()),
+                    let error = ui.label(
+                        RichText::new("Error")
+                            .strong()
+                            .size(15.0)
+                            .color(colors.user),
                     );
-                    let examiner = ui.add(
-                        egui::Label::new(
-                            RichText::new("Examiner")
-                                .strong()
-                                .size(15.0)
-                                .color(colors.assistant),
-                        )
-                        .sense(egui::Sense::click_and_drag()),
+                    ui.label(
+                        RichText::new("Examiner")
+                            .strong()
+                            .size(15.0)
+                            .color(Color32::from_rgb(146, 68, 252)),
                     );
-                    if (header_drag.drag_started()
-                        || error.drag_started()
-                        || examiner.drag_started())
-                        && !self.window_locked
-                    {
-                        context.send_viewport_cmd(egui::ViewportCommand::StartDrag);
-                    }
                     let icon_rect = egui::Rect::from_center_size(
                         egui::pos2(ui.max_rect().center().x, error.rect.center().y),
                         egui::vec2(30.0, 30.0),
@@ -58,34 +40,39 @@ impl ErrorExaminerApp {
                         egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1.0, 1.0)),
                         Color32::WHITE,
                     );
+                    let mut controls = Vec::with_capacity(5);
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("×").on_hover_text("Hide to tray").clicked() {
+                        let close = ui.button("×").on_hover_text("Hide to tray");
+                        controls.push(close.rect);
+                        if close.clicked() {
                             self.hide(context);
                         }
                         let maximized =
                             context.input(|input| input.viewport().maximized.unwrap_or(false));
-                        if ui
+                        let maximize = ui
                             .button(if maximized { "❐" } else { "□" })
-                            .on_hover_text("Maximize / restore")
-                            .clicked()
-                        {
+                            .on_hover_text("Maximize / restore");
+                        controls.push(maximize.rect);
+                        if maximize.clicked() {
                             context.send_viewport_cmd(egui::ViewportCommand::Maximized(!maximized));
                         }
-                        if ui.button("—").on_hover_text("Minimize").clicked() {
+                        let minimize = ui.button("—").on_hover_text("Minimize");
+                        controls.push(minimize.rect);
+                        if minimize.clicked() {
                             context.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
                         }
-                        if ui
+                        let lock = ui
                             .selectable_label(self.window_locked, "WinLock")
-                            .on_hover_text("Lock moving and resizing")
-                            .clicked()
-                        {
+                            .on_hover_text("Lock moving and resizing");
+                        controls.push(lock.rect);
+                        if lock.clicked() {
                             self.window_locked = !self.window_locked;
                         }
-                        if ui
+                        let pin = ui
                             .selectable_label(self.pin_top, "Pin")
-                            .on_hover_text("Always on top")
-                            .clicked()
-                        {
+                            .on_hover_text("Always on top");
+                        controls.push(pin.rect);
+                        if pin.clicked() {
                             self.pin_top = !self.pin_top;
                             context.send_viewport_cmd(egui::ViewportCommand::WindowLevel(
                                 if self.pin_top {
@@ -96,6 +83,16 @@ impl ErrorExaminerApp {
                             ));
                         }
                     });
+                    let pressed_on_header = context.input(|input| {
+                        input.pointer.primary_pressed()
+                            && input.pointer.interact_pos().is_some_and(|position| {
+                                drag_rect.contains(position)
+                                    && controls.iter().all(|rect| !rect.contains(position))
+                            })
+                    });
+                    if pressed_on_header && !self.window_locked {
+                        context.send_viewport_cmd(egui::ViewportCommand::StartDrag);
+                    }
                 });
                 ui.separator();
                 ui.horizontal(|ui| {
