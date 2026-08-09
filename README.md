@@ -28,6 +28,10 @@ diagnostic evidence, and sends bounded requests to the AI provider you choose.
 
 ![Chat](screenshots/chat.png)
 
+### Extensible parser schema index
+
+![Schema](screenshots/schema.png)
+
 ### Provider and privacy settings
 
 ![Settings](screenshots/settings.png)
