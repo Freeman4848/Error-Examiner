@@ -11,7 +11,7 @@ install -m 755 target/release/error-examiner "$package/"
 install -m 755 install-linux.sh "$package/"
 install -m 644 error-examiner.desktop "$package/"
 install -m 644 assets/app-icon.png "$package/"
-install -m 644 release/README.md "$package/README.md"
+install -m 644 release/README-LINUX.md "$package/README.md"
 install -m 644 LICENSE "$package/"
 (cd "$package" && sha256sum error-examiner >SHA256SUMS.txt)
 (
