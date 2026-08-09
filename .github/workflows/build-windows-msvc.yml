@@ -1,0 +1,32 @@
+name: Build Windows MSVC package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-msvc:
+    runs-on: windows-latest
+    env:
+      RUSTFLAGS: -C target-feature=+crt-static
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build and stage package
+        shell: pwsh
+        run: ./windows/build-release.ps1
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          $name = "Error-Examiner-Windows-x86_64.zip"
+          Compress-Archive dist/Error-Examiner-Windows-x86_64/* $name
+          $hash = (Get-FileHash $name -Algorithm SHA256).Hash.ToLower()
+          "$hash  $name" | Set-Content "$name.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Error-Examiner-Windows-MSVC-x86_64
+          path: |
+            Error-Examiner-Windows-x86_64.zip
+            Error-Examiner-Windows-x86_64.zip.sha256

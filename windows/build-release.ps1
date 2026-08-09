@@ -2,15 +2,17 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
-cargo build --release --bin error-examiner
+cargo build --release --bin error-examiner -j 2
 if ($LASTEXITCODE -ne 0) { throw "Cargo release build failed." }
 
 $package = Join-Path $root "dist\Error-Examiner-Windows-x86_64"
 New-Item -ItemType Directory -Path $package -Force | Out-Null
 Copy-Item "target\release\error-examiner.exe" `
     (Join-Path $package "Error-Examiner.exe") -Force
-Copy-Item "Create Desktop Shortcut.cmd", "README.md", "LICENSE" `
+Copy-Item "Create Desktop Shortcut.cmd", "LICENSE" `
     -Destination $package -Force
+Copy-Item "release\README-WINDOWS.md" `
+    (Join-Path $package "README.md") -Force
 Copy-Item "fixtures\schema-guard\wrong-update-docker-buildkit.log" `
     -Destination $package -Force
 
